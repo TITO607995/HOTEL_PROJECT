@@ -1,0 +1,159 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background-color: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.login-container {
+    background-color: #fff;
+    width: 900px;
+    max-width: 100%;
+    min-height: 550px;
+    display: flex;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.banner-section {
+    flex: 1.2;
+    background-color: #800000; 
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    padding: 40px;
+    text-align: center;
+}
+
+.event-logo {
+    width: 200px;
+    margin-bottom: 20px;
+}
+
+.badge {
+    background-color: #00c2cb; 
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.year {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.form-section {
+    flex: 1;
+    background-color: #e9e9e9; 
+    padding: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.form-section {
+    background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.header-logos {
+    display: flex;
+    gap: 25px; 
+    margin-bottom: 30px; 
+    align-items: center;
+    justify-content: flex-start; }
+.brand-logo {
+    height: 100px; 
+    width: auto; 
+    object-fit: contain; 
+    display: block;
+}
+
+h2 {
+    color: #333;
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: #666;
+    font-weight: 600;
+    margin-bottom: 30px;
+}
+
+/* Style Input */
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #444;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 8px;
+    background: white;
+    outline: none;
+}
+
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper i {
+    position: absolute;
+    right: 15px;
+    color: #888;
+    cursor: pointer;
+}
+
+.forgot-password {
+    display: block;
+    font-size: 0.75rem;
+    color: #007bff;
+    text-decoration: none;
+    margin-bottom: 25px;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 12px;
+    background-color: #cc0000; 
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-login:hover {
+    background-color: #a00000;
+}
