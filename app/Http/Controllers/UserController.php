@@ -39,30 +39,24 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('success', 'User berhasil didaftarkan! Jangan lupa tentukan rolenya di menu Assign Role.');
     }
 
-    public function edit(User $user)
-    {
-        if ($user->role && $user->role->name === 'Superadmin') abort(403);
-        return view('users.edit', compact('user'));
+   // Bagian Edit
+public function edit(User $user)
+{
+    // Menggunakan strtoupper untuk menghindari typo huruf besar/kecil
+    if ($user->role && strtoupper($user->role->NAME) === 'SUPERADMIN') {
+        abort(403, 'Gak boleh ngedit Boss Besar!');
+    }
+    return view('users.edit', compact('user'));
+}
+
+// Bagian Destroy
+public function destroy(User $user)
+{
+    if ($user->role && strtoupper($user->role->NAME) === 'SUPERADMIN') {
+        return redirect()->back()->with('error', 'Gak bisa hapus akun Superadmin, bro!');
     }
 
-    public function update(Request $request, User $user)
-    {
-        $user->update([
-            'name' => $request->name,
-            'email' => $request->email,
-        ]);
-
-        return redirect()->route('users.index')->with('success', 'Biodata user berhasil diperbarui!');
-    }
-
-    public function destroy(User $user)
-    {
-        // PROTEKSI: Superadmin gak boleh dihapus biar sistem gak mati
-        if ($user->role?->name === 'Superadmin') {
-            return redirect()->back()->with('error', 'Gak bisa hapus akun Superadmin, bro!');
-        }
-
-        $user->delete();
-        return redirect()->route('users.index')->with('success', 'User berhasil dihapus!');
-    }
+    $user->delete();
+    return redirect()->route('users.index')->with('success', 'User berhasil dihapus!');
+}
 }

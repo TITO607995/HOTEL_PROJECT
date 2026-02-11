@@ -9,15 +9,17 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void {
+   public function up()
+{
     Schema::create('rooms', function (Blueprint $table) {
-        $table->id();
-        $table->string('room_number')->unique();
-        $table->string('type'); // Misal: Deluxe, Suite
-        $table->integer('price');
-        $table->enum('status', ['available', 'booked'])->default('available');
-        $table->timestamps();
-    });
+    $table->id();
+    $table->string('room_number');
+    $table->string('type'); 
+    $table->integer('price');
+    $table->string('image')->nullable(); // Untuk menyimpan nama file foto kamar
+    $table->enum('status', ['booking', 'occupied', 'available', 'vacant dirty'])->default('available');
+    $table->timestamps();
+});
 }
 
     /**

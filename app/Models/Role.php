@@ -11,6 +11,6 @@ class Role extends Model
     // Relasi Many-to-Many ke Menu
     public function menus()
     {
-        return $this->belongsToMany(Menu::class, 'role_menu');
+        return $this->belongsToMany(Menu::class, 'role_menu', 'role_id', 'menu_id');
     }
 }

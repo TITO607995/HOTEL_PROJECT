@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models; // Pastikan tidak ada typo di sini
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -8,7 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class Room extends Model
 {
     use HasFactory;
-
-    // Field yang boleh diisi
     protected $fillable = ['room_number', 'type', 'price', 'status'];
 }

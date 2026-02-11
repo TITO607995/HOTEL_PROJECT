@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Perhotelan SMKSIG</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
@@ -68,12 +69,12 @@
                 <div class="flex justify-center items-center gap-6 mb-12">
                     <div class="group relative">
                         <div class="absolute -inset-1 bg-gradient-to-r from-red-600 to-maroon-600 rounded-full blur opacity-25 group-hover:opacity-50 transition"></div>
-                        <img src="{{ asset('assets/logosig.jpeg') }}" alt="Logo SIG" class="relative w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+                        <img src="{{ asset('image/logoph.png') }}" alt="Logo SIG" class="relative w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
                     </div>
                     <div class="w-px h-10 bg-gray-200"></div>
                     <div class="group relative">
                         <div class="absolute -inset-1 bg-gradient-to-r from-red-600 to-maroon-600 rounded-full blur opacity-25 group-hover:opacity-50 transition"></div>
-                        <img src="{{ asset('assets/logoph.png') }}" alt="Logo PH" class="relative w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+                        <img src="{{ asset('image/smksig.png') }}" alt="Logo PH" class="relative w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
                     </div>
                 </div>
 
@@ -97,7 +98,6 @@
                                 class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none transition-all input-focus text-gray-800 font-semibold"
                                 placeholder="nama@email.com">
                         </div>
-                        <x-input-error :messages="$errors->get('email')" class="mt-2" />
                     </div>
 
                     <div class="space-y-2">
@@ -118,7 +118,6 @@
                                 <i class="fas fa-eye" id="eye-icon"></i>
                             </button>
                         </div>
-                        <x-input-error :messages="$errors->get('password')" class="mt-2" />
                     </div>
 
                     <div class="flex items-center">
@@ -133,7 +132,7 @@
                 </form>
 
                 <p class="mt-16 text-center text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">
-                    &copy; 2026 %NYENI AND AI &bull; XII RPL 1 @2026
+                    &copy; 2026 5NYENI AND AI &bull; XII RPL 1 @2026
                 </p>
             </div>
         </div>
@@ -151,6 +150,33 @@
                 icon.classList.replace('fa-eye-slash', 'fa-eye');
             }
         }
+        // Cek apakah ada error dari Laravel
+    @if ($errors->any())
+        Swal.fire({
+            icon: 'error',
+            title: 'Login Gagal!',
+            text: '{{ $errors->first() }}', // Mengambil pesan error pertama (misal: "These credentials do not match our records.")
+            confirmButtonColor: '#8B0000', // Warna Maroon senada dengan tema kamu
+            background: '#ffffff',
+            customClass: {
+                title: 'text-2xl font-black text-gray-900',
+                popup: 'rounded-3xl shadow-2xl border-none'
+            }
+        });
+    @endif
+
+    // Cek jika ada session status (misal setelah reset password)
+    @if (session('status'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: '{{ session('status') }}',
+            confirmButtonColor: '#8B0000',
+            customClass: {
+                popup: 'rounded-3xl'
+            }
+        });
+    @endif
     </script>
 </body>
 </html>

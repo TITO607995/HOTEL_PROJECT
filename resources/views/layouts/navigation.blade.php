@@ -1,10 +1,15 @@
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
     @php
-        // Cek jika user adalah Superadmin, maka ambil semua data dari tabel Menu
-        // Jika bukan, ambil hanya menu yang terelasi (hasil checklist)
-        $menus = auth()->user()->role->name === 'Superadmin' 
-                 ? \App\Models\Menu::all() 
-                 : auth()->user()->role->menus;
+        $user = auth()->user();
+        
+        // 1. Ambil data menu dengan aman
+        if ($user && $user->role) {
+            // Gunakan strtoupper untuk antisipasi perbedaan penulisan di DB (Superadmin vs SUPERADMIN)
+            $isadmin = strtoupper($user->role->name) === 'SUPERADMIN';
+            $menus = $isadmin ? \App\Models\Menu::all() : $user->role->menus;
+        } else {
+            $menus = collect(); // Koleksi kosong agar foreach tidak crash
+        }
     @endphp
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -22,7 +27,6 @@
                     </x-nav-link>
 
                     @foreach($menus as $menu)
-                        {{-- Skip Dashboard jika sudah ada di tabel menus agar tidak double --}}
                         @if(strtolower($menu->name) != 'dashboard')
                             <x-nav-link :href="url($menu->url)" :active="request()->is(trim($menu->url, '/'))">
                                 {{ $menu->name }}
@@ -36,7 +40,8 @@
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }} ({{ Auth::user()->role->name }})</div>
+                            {{-- FIX ERROR DISINI: Tambahkan ?? untuk handle jika role null --}}
+                            <div>{{ $user->name ?? 'Guest' }} ({{ $user->role->name ?? 'Tanpa Role' }})</div>
 
                             <div class="ms-1">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -54,8 +59,7 @@
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
+                                    onclick="event.preventDefault(); this.closest('form').submit();">
                                 {{ __('Log Out') }}
                             </x-dropdown-link>
                         </form>
@@ -91,8 +95,8 @@
 
         <div class="pt-4 pb-1 border-t border-gray-200">
             <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                <div class="font-medium text-base text-gray-800">{{ $user->name ?? 'Guest' }}</div>
+                <div class="font-medium text-sm text-gray-500">{{ $user->email ?? '' }}</div>
             </div>
 
             <div class="mt-3 space-y-1">
@@ -103,8 +107,7 @@
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
+                            onclick="event.preventDefault(); this.closest('form').submit();">
                         {{ __('Log Out') }}
                     </x-responsive-nav-link>
                 </form>
