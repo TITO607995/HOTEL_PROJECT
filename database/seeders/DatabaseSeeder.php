@@ -34,16 +34,6 @@ class DatabaseSeeder extends Seeder
         $roleSuper = Role::firstOrCreate(['NAME' => 'SUPERADMIN']);
         $roleStaff = Role::firstOrCreate(['NAME' => 'STAFF']);
 
-        // 3. Buat User Admin Sakti (Update Email & PW sesuai request)
-        // Akun Utama (CEO/Tito)
-        User::updateOrCreate(
-            ['email' => 'admintito@hotel.com'],
-            [
-                'name' => 'Tito Executive',
-                'password' => Hash::make('tito123'), // PW Baru
-                'role_id' => $roleSuper->id
-            ]
-        );
 
         // Akun Admin Galang
         User::updateOrCreate(
@@ -64,6 +54,15 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+         User::updateOrCreate(
+            ['email' => 'admin4@gmail.com'],
+            [
+                'name' => 'Admin',
+                'password' => Hash::make('123'), // PW Baru
+                'role_id' => $roleSuper->id
+            ]
+        );
+
         // 4. Tambahan: Buat User Staff Biasa (Untuk ngetes proteksi sistem)
         User::updateOrCreate(
             ['email' => 'staff@hotel.com'],
@@ -75,7 +74,7 @@ class DatabaseSeeder extends Seeder
         );
         // 4. Tambahan: Buat User Staff Biasa (Untuk ngetes proteksi sistem)
         User::updateOrCreate(
-            ['email' => 'staff12@hotel.com'],
+            ['email' => 'admin@hotel.com'],
             [
                 'name' => 'Staff Biasa 2',
                 'password' => Hash::make('staff123'),

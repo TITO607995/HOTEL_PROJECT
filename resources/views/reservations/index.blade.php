@@ -8,26 +8,34 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; color: #1e293b; }
         
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: #F8FAFC;
-        }
-
-        /* Custom scrollbar biar tetep estetik */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #800000; border-radius: 10px; }
 
-        .input-underline {
-            background-color: transparent !important;
-            border-bottom: 2px solid #F1F5F9;
-            transition: all 0.3s ease;
+        .input-underline { 
+            background-color: transparent !important; 
+            border-bottom: 2px solid #F1F5F9; 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .input-underline:focus { 
+            border-bottom-color: #800000; 
+            outline: none; 
+            padding-left: 4px;
         }
 
-        .input-underline:focus {
-            border-bottom-color: #800000;
-            outline: none;
+        .custom-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23800000'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.2em;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0.6;
         }
     </style>
 </head>
@@ -38,70 +46,81 @@
     <div class="flex">
         <x-sidebar></x-sidebar>
 
-
-            <form action="{{ route('reservations.store') }}" method="POST" class="flex flex-col lg:flex-row gap-10 items-start">
+        <main class="flex-1 p-6 lg:p-10">
+            <form id="reservationForm" action="{{ route('reservations.store') }}" method="POST" class="flex flex-col lg:flex-row gap-10 items-start max-w-7xl mx-auto">
                 @csrf
                 
                 <div class="flex-1 space-y-8 w-full">
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-white p-7 rounded-[2rem] shadow-sm border border-gray-100 hover:shadow-md transition-all group">
-                            <div class="flex items-center gap-5">
-                                <div class="bg-red-50 p-4 rounded-2xl text-[#800000] group-hover:bg-[#800000] group-hover:text-white transition-colors">
+                    <div class="grid grid-cols-1 gap-5">
+                        <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500 group">
+                            <div class="flex items-center gap-6">
+                                <div class="bg-red-50 p-4 rounded-2xl text-[#800000] group-focus-within:bg-[#800000] group-focus-within:text-white transition-all duration-300">
                                     <i class="fas fa-calendar-check text-xl"></i>
                                 </div>
                                 <div class="flex-1">
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Check In Date</label>
-                                    <input type="date" name="arrival_date" value="{{ old('arrival_date') }}" 
-                                        class="w-full border-none focus:ring-0 text-lg font-bold text-gray-800 bg-transparent cursor-pointer" required>
+                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1 group-focus-within:text-[#800000]">Check In Date</label>
+                                    <input type="date" id="arrival_date" name="arrival_date" value="{{ old('arrival_date', date('Y-m-d')) }}" 
+                                        min="{{ date('Y-m-d') }}"
+                                        class="w-full border-none focus:ring-0 text-lg font-bold text-gray-800 bg-transparent cursor-pointer p-0" required>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="bg-white p-7 rounded-[2rem] shadow-sm border border-gray-100 hover:shadow-md transition-all group">
-                            <div class="flex items-center gap-5">
-                                <div class="bg-red-50 p-4 rounded-2xl text-[#800000] group-hover:bg-[#800000] group-hover:text-white transition-colors">
+                        <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500 group">
+                            <div class="flex items-center gap-6">
+                                <div class="bg-red-50 p-4 rounded-2xl text-[#800000] group-focus-within:bg-[#800000] group-focus-within:text-white transition-all duration-300">
                                     <i class="fas fa-calendar-minus text-xl"></i>
                                 </div>
                                 <div class="flex-1">
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Check Out Date</label>
-                                    <input type="date" name="departure_date" value="{{ old('departure_date', \Carbon\Carbon::now()->addDay()->format('Y-m-d')) }}" 
-                                        class="w-full border-none focus:ring-0 text-lg font-bold text-gray-800 bg-transparent cursor-pointer" required>
+                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1 group-focus-within:text-[#800000]">Check Out Date</label>
+                                    <input type="date" id="departure_date" name="departure_date" value="{{ old('departure_date', \Carbon\Carbon::now()->addDay()->format('Y-m-d')) }}" 
+                                        min="{{ \Carbon\Carbon::now()->addDay()->format('Y-m-d') }}"
+                                        class="w-full border-none focus:ring-0 text-lg font-bold text-gray-800 bg-transparent cursor-pointer p-0" required>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100">
-                        <div class="flex items-center gap-3 mb-8">
-                            <div class="w-2 h-8 bg-[#800000] rounded-full"></div>
-                            <h3 class="text-lg font-bold text-gray-800 tracking-tight">Room Selection</h3>
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-1.5 h-8 bg-[#800000] rounded-full shadow-[0_0_10px_rgba(128,0,0,0.3)]"></div>
+                            <h3 class="text-xl font-extrabold text-gray-800 tracking-tight">Room Selection</h3>
                         </div>
 
                         <div class="space-y-8">
                             <div>
-                                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Pilih Kamar Tersedia</label>
-                                <select name="room_id" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 focus:border-[#800000] focus:ring-0 transition-all font-bold text-gray-700 appearance-none cursor-pointer" required>
-                                    <option value="">-- Click to search available rooms --</option>
-                                    @foreach($rooms as $room)
-                                        <option value="{{ $room->id }}" {{ old('room_id') == $room->id ? 'selected' : '' }}>
-                                            Kamar {{ $room->room_number }} — {{ $room->type }} (Rp{{ number_format($room->price, 0, ',', '.') }})
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-1">Pilih Kamar Tersedia</label>
+                                @if ($rooms->where('status', 'available')->count() > 0)
+                                    <select name="room_id" class="custom-select w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 focus:border-[#800000] focus:ring-2 focus:ring-red-50 transition-all font-bold text-gray-700 cursor-pointer" required>
+                                        <option value="" disabled selected>-- Click to search available rooms --</option>
+                                        @foreach($rooms as $room)
+                                            @if($room->status == 'available')
+                                                <option value="{{ $room->id }}" {{ old('room_id') == $room->id ? 'selected' : '' }}>
+                                                    Kamar {{ $room->room_number }} — {{ $room->type }} (Rp{{ number_format($room->price, 0, ',', '.') }})
+                                                </option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                @else
+                                    <div class="w-full bg-red-50 border border-red-100 text-[#800000] px-5 py-4 rounded-2xl font-bold flex items-center gap-3">
+                                        <i class="fas fa-exclamation-circle animate-pulse"></i>
+                                        Maaf, semua kamar saat ini sedang penuh.
+                                    </div>
+                                @endif
                             </div>
-                            
+
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div>
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Reservation Type</label>
-                                    <select name="reservation_type" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 focus:border-[#800000] focus:ring-0 transition-all font-bold text-sm text-gray-700">
+                                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-1">Reservation Type</label>
+                                    <select name="reservation_type" class="custom-select w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 focus:border-[#800000] transition-all font-bold text-sm text-gray-700">
                                         <option value="non-guaranteed">Non-Guaranteed</option>
                                         <option value="guaranteed">Guaranteed (DP)</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Payment Method</label>
-                                    <select name="payment_method" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 focus:border-[#800000] focus:ring-0 transition-all font-bold text-sm text-gray-700">
+                                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-1">Payment Method</label>
+                                    <select name="payment_method" class="custom-select w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 focus:border-[#800000] transition-all font-bold text-sm text-gray-700">
                                         <option value="Cash">Cash</option>
                                         <option value="Transfer">Bank Transfer</option>
                                         <option value="Credit Card">Credit Card</option>
@@ -112,39 +131,39 @@
                     </div>
                 </div>
 
-                <div class="w-full lg:w-[480px] lg:sticky lg:top-10">
-                    <div class="bg-white rounded-[3rem] shadow-2xl shadow-gray-200 border border-gray-100 overflow-hidden">
-                        <div class="bg-[#800000] p-10 text-white relative">
-                            <div class="absolute top-0 right-0 opacity-10 p-6">
-                                <i class="fas fa-hotel text-7xl"></i>
+                <div class="w-full lg:w-[450px] lg:sticky lg:top-10">
+                    <div class="bg-white rounded-[3rem] shadow-2xl shadow-gray-200 border border-gray-50 overflow-hidden transform transition-all hover:scale-[1.01]">
+                        <div class="bg-[#800000] p-10 text-white relative overflow-hidden">
+                            <div class="absolute -top-5 -right-5 opacity-10 p-6 rotate-12">
+                                <i class="fas fa-hotel text-9xl"></i>
                             </div>
-                            <div class="relative z-10 flex items-center gap-4">
-                                <div class="bg-white/10 w-14 h-14 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20">
+                            <div class="relative z-10 flex items-center gap-5">
+                                <div class="bg-white/10 w-14 h-14 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20 shadow-inner">
                                     <i class="fas fa-id-card text-2xl text-white"></i>
                                 </div>
                                 <div>
-                                    <h2 class="text-2xl font-black italic uppercase tracking-tighter leading-none">Registration Card</h2>
-                                    <p class="text-[10px] text-red-200 mt-1 uppercase tracking-widest font-bold">Guest Identification</p>
+                                    <h2 class="text-2xl font-black italic uppercase tracking-tighter leading-none">Registration</h2>
+                                    <p class="text-[10px] text-red-200 mt-1 uppercase tracking-[0.2em] font-bold">Guest Identification</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="p-10 space-y-7">
+                        <div class="p-10 space-y-6">
                             <div class="group">
-                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Lead Guest Name</label>
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1 group-focus-within:text-[#800000] transition-colors">Lead Guest Name</label>
                                 <input type="text" name="guest_name" value="{{ old('guest_name') }}" 
                                     class="w-full input-underline py-2 font-bold text-gray-800 placeholder-gray-300 italic" placeholder="Input guest full name..." required>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-8">
+                            <div class="grid grid-cols-2 gap-6">
                                 <div>
                                     <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Guests</label>
-                                    <input type="number" name="num_guests" value="{{ old('num_guests', 1) }}" 
+                                    <input type="number" min="1" name="num_guests" value="{{ old('num_guests', 1) }}" 
                                         class="w-full input-underline py-2 font-bold text-gray-800" required>
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Phone Number</label>
-                                    <input type="text" name="phone" value="{{ old('phone') }}" 
+                                    <input type="tel" name="phone" value="{{ old('phone') }}" 
                                         class="w-full input-underline py-2 font-bold text-gray-800" placeholder="08..." required>
                                 </div>
                             </div>
@@ -155,7 +174,7 @@
                                     class="w-full input-underline py-2 font-bold text-gray-800" placeholder="guest@example.com" required>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-8">
+                            <div class="grid grid-cols-2 gap-6">
                                 <div>
                                     <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Country</label>
                                     <input type="text" name="country" value="{{ old('country', 'Indonesia') }}" 
@@ -175,14 +194,14 @@
                             </div>
 
                             <button type="submit" 
-                                class="w-full mt-6 bg-[#800000] text-white font-black py-5 rounded-3xl shadow-xl hover:bg-black hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3">
+                                class="w-full mt-4 bg-[#800000] text-white font-black py-5 rounded-3xl shadow-[0_10px_20px_rgba(128,0,0,0.2)] hover:bg-black hover:shadow-2xl hover:-translate-y-1 active:scale-95 transition-all duration-300 uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3">
                                 <span>Complete Reservation</span>
                                 <i class="fas fa-check-circle text-sm"></i>
                             </button>
                         </div>
                     </div>
                     
-                    <p class="text-center mt-6 text-[10px] font-bold text-gray-300 uppercase tracking-widest">
+                    <p class="text-center mt-6 text-[10px] font-bold text-gray-300 uppercase tracking-[0.3em]">
                         &copy; 2026 Hotel SIG Management System
                     </p>
                 </div>
@@ -192,11 +211,65 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        const form = document.getElementById('reservationForm');
+        
+        // 1. POPUP KONFIRMASI SAAT SUBMIT
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); // Tahan pengiriman form
+
+            Swal.fire({
+                title: 'Konfirmasi Data',
+                text: "Apakah data tamu dan reservasi sudah benar?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#800000',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Ya, Simpan!',
+                cancelButtonText: 'Cek Lagi',
+                customClass: {
+                    popup: 'rounded-[2.5rem]',
+                    confirmButton: 'rounded-xl px-6 py-3 font-bold',
+                    cancelButton: 'rounded-xl px-6 py-3 font-bold'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Beri loading dikit biar pro
+                    Swal.fire({
+                        title: 'Sedang Menyimpan...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    form.submit(); // Kirim ke Laravel
+                }
+            });
+        });
+
+        // 2. LOGIKA TANGGAL OTOMATIS
+        const arrivalInput = document.getElementById('arrival_date');
+        const departureInput = document.getElementById('departure_date');
+
+        arrivalInput.addEventListener('change', function() {
+            if (this.value) {
+                let nextDay = new Date(this.value);
+                nextDay.setDate(nextDay.getDate() + 1);
+                
+                const formattedDate = nextDay.toISOString().split('T')[0];
+                departureInput.min = formattedDate;
+                
+                if (departureInput.value < formattedDate) {
+                    departureInput.value = formattedDate;
+                }
+            }
+        });
+
+        // 3. TAMPILKAN ERROR VALIDASI LARAVEL (JIKA ADA)
         @if ($errors->any())
             Swal.fire({
                 icon: 'error',
-                title: 'Opps!',
-                text: 'Pastikan semua data terisi dengan benar.',
+                title: 'Ada Kesalahan!',
+                text: 'Pastikan email belum terdaftar atau data sudah lengkap.',
                 confirmButtonColor: '#800000',
                 customClass: { popup: 'rounded-[2rem]' }
             });

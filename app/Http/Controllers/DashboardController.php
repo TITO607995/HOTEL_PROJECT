@@ -1,30 +1,59 @@
 <?php
-// app/Http/Controllers/DashboardController.php
 
 namespace App\Http\Controllers;
 
+use App\Models\Room;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        // Data simulasi (nanti bisa diambil dari Database)
-        $username = "Resepsionis";
+        // 1. Ambil Username
+        $username = Auth::check() ? Auth::user()->name : "Resepsionis";
         
-        $rooms = [
-            ['no' => '101', 'type' => 'Deluxe', 'status' => 'Occupied', 'color' => 'bg-red-500'],
-            ['no' => '102', 'type' => 'Suite', 'status' => 'Dirty', 'color' => 'bg-yellow-400'],
-            ['no' => '103', 'type' => 'Standard', 'status' => 'Available', 'color' => 'bg-green-500'],
-            ['no' => '104', 'type' => 'Standard', 'status' => 'In-house', 'color' => 'bg-orange-400'],
-            ['no' => '105', 'type' => 'Executive', 'status' => 'Available', 'color' => 'bg-green-500']
+        // 2. Ambil data Room dengan Pagination
+        $rooms = Room::latest()->paginate(5);
+
+        // 3. Mapping warna status (disinkronkan dengan tampilan tabel)
+        $rooms->through(function ($room) {
+            $room->color = match (strtolower($room->status)) {
+                'available'   => 'bg-green-500',
+                'occupied'    => 'bg-red-500',
+                'dirty'       => 'bg-yellow-400',
+                'maintenance' => 'bg-gray-500',
+                'in-house'    => 'bg-orange-400',
+                default       => 'bg-blue-500',
+            };
+            return $room;
+        });
+
+        // 4. Statistik Dinamis
+        $statsData = Room::select('type', 
+            DB::raw('count(*) as total'),
+            DB::raw("SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as sisa")
+        )
+        ->groupBy('type')
+        ->get();
+
+        // Inisialisasi array default agar tidak error jika database kosong
+        $stats = [
+            'Standard' => ['total' => 0, 'sisa' => 0],
+            'Suite'    => ['total' => 0, 'sisa' => 0],
+            'Deluxe'   => ['total' => 0, 'sisa' => 0]
         ];
 
-        $stats = [
-            'Standard' => ['total' => 15, 'sisa' => 10],
-            'Suite' => ['total' => 10, 'sisa' => 5],
-            'Deluxe' => ['total' => 5, 'sisa' => 1]
-        ];
+        foreach ($statsData as $data) {
+            $type = ucfirst(strtolower($data->type)); 
+            if (array_key_exists($type, $stats)) {
+                $stats[$type] = [
+                    'total' => (int) $data->total,
+                    'sisa'  => (int) ($data->sisa ?? 0)
+                ];
+            }
+        }
 
         return view('dashboard', compact('username', 'rooms', 'stats'));
     }

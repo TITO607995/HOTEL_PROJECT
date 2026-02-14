@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AssignRoleController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\GuestController;
 use App\Models\Room; 
 use Illuminate\Support\Facades\Route;
 
@@ -13,32 +14,48 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// --- DASHBOARD (Statistik Real-time) ---
+
 Route::get('/dashboard', function () {
-    // Menghitung SISA kamar yang tersedia saja
     $stats = [
-        'Suite'    => Room::where('type', 'Suite')->where('status', 'available')->count(),
-        'Standard' => Room::where('type', 'Standard')->where('status', 'available')->count(),
-        'Deluxe'   => Room::where('type', 'Deluxe')->where('status', 'available')->count(),
+        'Standard' => \App\Models\Room::where('type', 'Standard')->count(),
+        'Deluxe'   => \App\Models\Room::where('type', 'Deluxe')->count(),
+        'Suite'    => \App\Models\Room::where('type', 'Suite')->count(),
     ];
 
-    // Mapping data semua kamar untuk tabel
-    $rooms = Room::all()->map(function($room) {
-        $color = 'bg-gray-500'; // Default
-        if ($room->status == 'available') $color = 'bg-green-500';
-        if ($room->status == 'occupied')  $color = 'bg-red-600';
-        if ($room->status == 'cleaning')  $color = 'bg-blue-400';
+    $roomList = \App\Models\Room::with(['reservations' => function($q) {
+            $q->latest();
+        }])
+        ->where('status', '!=', 'available')
+        ->get()
+        ->map(function($room) {
+            $latestRes = $room->reservations->first();
+            
+            $leftStatus = ($room->status == 'vacant dirty') ? 'Dirty' : 'In-house';
+            $paymentMethod = $latestRes ? $latestRes->payment_method : '-';
+            $isPaid = $latestRes && $latestRes->reservation_type == 'guaranteed'; 
 
-        return [
-            'no'     => $room->room_number,
-            'type'   => $room->type,
-            'status' => $room->status,
-            'color'  => $color
-        ];
-    });
+            return [
+                'no'        => $room->room_number,
+                'type'      => $room->type,
+                'left_status'=> $leftStatus,
+                'payment'   => $paymentMethod,
+                'is_paid'   => $isPaid,
+                'action'    => strtoupper($room->status),
+                'action_color' => ($room->status == 'occupied') ? 'bg-red-500' : (($room->status == 'vacant dirty') ? 'bg-yellow-500' : 'bg-orange-500'),
+                'visibility' => ($latestRes && $latestRes->is_incognito) ? 'Incognito' : 'Public'
+            ];
+        });
 
-    return view('dashboard', compact('stats', 'rooms'));
-})->middleware(['auth', 'verified'])->name('dashboard');
+    return view('dashboard', compact('stats', 'roomList'));
+})->middleware(['auth'])->name('dashboard');
+
+Route::get('/check-out', [ReservationController::class, 'checkoutPage'])->name('reservations.checkout.page');
+Route::post('/check-out/{id}', [ReservationController::class, 'processCheckout'])->name('reservations.checkout.process');
+Route::get('/guests', [ReservationController::class, 'guestIndex'])->name('guests.index');
+Route::post('/guests/incognito/{id}', [ReservationController::class, 'toggleIncognito'])->name('guests.toggle-incognito');
+Route::post('/reservasi/extend/{id}', [ReservationController::class, 'extend'])->name('reservations.extend');
+Route::get('/rooms/maintenance', [RoomController::class, 'maintenancePage'])->name('rooms.maintenance.page');
+Route::post('/rooms/maintenance/{id}', [RoomController::class, 'updateMaintenance'])->name('rooms.maintenance.update');
 
 // --- SEMUA ROUTE YANG BUTUH LOGIN ---
 Route::middleware('auth')->group(function () {
@@ -60,6 +77,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    //TAMU WEB
 
     // --- KHUSUS SUPERADMIN ---
     Route::middleware('can:superadmin-only')->group(function () {
