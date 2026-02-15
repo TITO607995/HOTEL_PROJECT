@@ -17,23 +17,27 @@
             <span>Manajemen Kamar</span>
         </a>
 
-        <a href="{{ route('reservations.index') }}" 
-           class="flex items-center space-x-3 p-3 rounded-lg transition {{ request()->is('reservasi*') ? 'bg-white/20 font-bold shadow-inner' : 'hover:bg-white/10' }}">
-            <span class="text-lg">📝</span> 
-            <span>Reservasi</span>
-        </a>
+        <div x-data="{ open: false }">
+            <button type="button" 
+                @click="open = !open" 
+                class="w-full flex items-center justify-between p-3 rounded-lg transition {{ request()->is('reservasi*', 'registration*', 'check-out*') ? 'bg-white/20 font-bold' : 'hover:bg-white/10' }}">
+                <div class="flex items-center space-x-3">
+                    <span class="text-lg">📅</span> 
+                    <span>Reservasi</span>
+                </div>
+                <i class="fas fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
+            </button>
 
-        <a href="{{ route('reservations.registration') }}" 
-           class="flex items-center space-x-3 p-3 rounded-lg transition {{ request()->is('registration*') ? 'bg-white/20 font-bold shadow-inner' : 'hover:bg-white/10' }}">
-            <span class="text-lg">🔑</span> 
-            <span>Check-in</span>
-        </a>
-
-        <a href="{{ route('reservations.checkout.page') }}" 
-           class="flex items-center space-x-3 p-3 rounded-lg transition {{ request()->is('check-out*') ? 'bg-white/20 font-bold shadow-inner' : 'hover:bg-white/10' }}">
-            <span class="text-lg">🚪</span> 
-            <span>Check-out</span>
-        </a>
+            <div x-show="open" 
+                x-cloak
+                @click.away="open = false"
+                class="mt-2 ml-4 space-y-1 border-l-2 border-white/10 pl-4">
+                
+                <a href="{{ route('reservations.index') }}" class="block p-2 text-sm text-white/70 hover:text-white">📝 Monitoring</a>
+                <a href="{{ route('reservations.registration') }}" class="block p-2 text-sm text-white/70 hover:text-white">🔑 Check-in</a>
+                <a href="{{ route('reservations.checkout.page') }}" class="block p-2 text-sm text-white/70 hover:text-white">🚪 Check-out</a>
+            </div>
+        </div>
 
         <a href="{{ route('guests.index') }}" 
            class="flex items-center space-x-3 p-3 rounded-lg transition {{ request()->is('guests*') ? 'bg-white/20 font-bold shadow-inner' : 'hover:bg-white/10' }}">
@@ -77,3 +81,7 @@
         <div class="text-[10px] text-white/30 text-center mt-4 italic tracking-wide">Web by 5NYeni</div>
     </div>
 </aside>
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<style>
+    [x-cloak] { display: none !important; }
+</style>

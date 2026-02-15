@@ -48,13 +48,13 @@ public function updateMaintenance(Request $request, $id)
 {
     $room = \App\Models\Room::findOrFail($id);
     
-    // Logika simpan
+    // Pastikan status yang dikirim adalah 'available', 'booked', 'oo', atau 'os'
     $room->update([
-        'status' => $request->status, // bisa 'available', 'oo', atau 'os'
+        'status' => $request->status,
         'maintenance_type' => $request->status == 'available' ? null : $request->status,
         'maintenance_notes' => $request->status == 'available' ? null : $request->notes,
     ]);
 
-    return redirect()->back()->with('success', 'Kamar ' . $room->room_number . ' berhasil diupdate!');
+    return redirect()->back()->with('success', 'Status kamar ' . $room->room_number . ' berhasil diperbarui!');
 }
 }

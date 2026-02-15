@@ -53,6 +53,7 @@ class ReservationController extends Controller
     {
         $rooms = Room::where('status', 'available')->get();
         return view('reservations.create', compact('rooms'));
+        \App\Models\Room::where('id', $request->room_id)->update(['status' => 'booked']);
     }
 
     // Menyimpan data dari form ke Database
