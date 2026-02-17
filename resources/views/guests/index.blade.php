@@ -3,94 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <title>Manajemen Tamu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Manajemen Tamu | Hotel SIG</title>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
-        body { font-family: 'Poppins', sans-serif; }
+        body { font-family: 'Poppins', sans-serif; overflow-x: hidden; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; }
+        ::-webkit-scrollbar-thumb { background: #800000; border-radius: 10px; }
+        .table-container { scrollbar-gutter: stable; }
     </style>
 </head>
-<body class="bg-[#D9D9D9] min-h-screen">
 
-    <x-header></x-header>
-    <x-sidebar></x-sidebar>
+<body class="bg-[#F8FAFC] text-slate-700">
 
-    <div class="flex">
-        <main class="flex-1 ml-64 p-8">
+    <header class="fixed top-0 left-0 right-0 z-[60] bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <x-header></x-header>
+    </header>
+
+    <div class="flex min-h-screen">
+        
+        <aside class="fixed inset-y-0 left-0 w-64 z-50 bg-white border-r border-gray-100 hidden lg:block">
+            <div class="pt-20 h-full">
+                <x-sidebar></x-sidebar>
+            </div>
+        </aside>
+
+        <div class="flex-1 lg:ml-64 flex flex-col pt-20">
             
-            <div class="mb-8">
-                <h1 class="text-3xl font-black text-[#800000] italic uppercase tracking-tighter">
-                    Manajemen Tamu
-                </h1>
-                <p class="text-gray-600 text-sm">Kelola status privasi dan informasi kontak tamu hotel.</p>
-            </div>
-
-            <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border-t-[10px] border-[#800000]">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="bg-gray-50 border-b border-gray-100">
-                                <th class="p-5 text-xs font-black uppercase text-gray-400 tracking-widest">Nama Tamu</th>
-                                <th class="p-5 text-xs font-black uppercase text-gray-400 tracking-widest">Status Privasi</th>
-                                <th class="p-5 text-xs font-black uppercase text-gray-400 tracking-widest">Kontak</th>
-                                <th class="p-5 text-xs font-black uppercase text-gray-400 tracking-widest text-center">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-50">
-                            @forelse($guests as $guest)
-                            <tr class="hover:bg-gray-50/50 transition-all duration-200">
-                                <td class="p-5">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#800000]">
-                                            <i class="fas {{ $guest->is_incognito ? 'fa-user-secret' : 'fa-user' }}"></i>
-                                        </div>
-                                        <div class="font-bold text-gray-800 {{ $guest->is_incognito ? 'italic text-gray-400' : '' }}">
-                                            {{ $guest->is_incognito ? 'Guest Masked' : $guest->guest_name }}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="p-5">
-                                    <span class="inline-flex items-center gap-2 text-[10px] font-black px-4 py-1.5 rounded-full {{ $guest->is_incognito ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700' }}">
-                                        <span class="w-1.5 h-1.5 rounded-full {{ $guest->is_incognito ? 'bg-purple-700' : 'bg-blue-700' }}"></span>
-                                        {{ $guest->is_incognito ? 'INCOGNITO' : 'PUBLIC' }}
-                                    </span>
-                                </td>
-                                <td class="p-5">
-                                    <div class="flex flex-col">
-                                        <span class="text-sm font-medium text-gray-700">{{ $guest->email }}</span>
-                                        <span class="text-[10px] text-gray-400">Terdaftar pada {{ $guest->created_at->format('d M Y') }}</span>
-                                    </div>
-                                </td>
-                                <td class="p-5 text-center">
-                                    <form action="{{ route('guests.toggle-incognito', $guest->id) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="group flex items-center gap-2 mx-auto text-[10px] font-bold border-2 border-[#800000] text-[#800000] px-4 py-2 rounded-xl hover:bg-[#800000] hover:text-white transition-all duration-300 shadow-sm active:scale-95">
-                                            <i class="fas fa-sync-alt group-hover:rotate-180 transition-transform duration-500"></i>
-                                            SWITCH MODE
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="4" class="p-10 text-center text-gray-400 italic">
-                                    <i class="fas fa-users-slash text-4xl mb-3 block"></i>
-                                    Belum ada data tamu.
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+            <main class="p-6 md:p-10 lg:p-12">
+                
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+                    <div>
+                        <nav class="flex items-center gap-2 mb-3">
+                            <span class="w-8 h-[2px] bg-[#800000]"></span>
+                            <span class="text-[10px] font-black text-[#800000] uppercase tracking-[0.3em]">Administrator</span>
+                        </nav>
+                        <h1 class="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight flex items-center gap-4">
+                            <span class="p-3 bg-[#800000] text-white rounded-2xl shadow-lg shadow-[#800000]/20">
+                                <i class="fas fa-users-cog text-xl"></i>
+                            </span>
+                            MANAJEMEN TAMU
+                        </h1>
+                        <p class="text-slate-500 text-sm mt-3 max-w-md leading-relaxed">
+                            Otoritas daftar tamu aktif dan kendali <span class="font-semibold text-slate-800 underline decoration-[#800000]/30">Mode Incognito</span> untuk privasi maksimal.
+                        </p>
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <div class="bg-white p-4 px-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-shadow">
+                            <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center">
+                                <i class="fas fa-address-book text-[#800000]"></i>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Terdaftar</span>
+                                <span class="text-2xl font-black text-slate-800">{{ $guests->count() }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <footer class="mt-6 text-center">
-                <p class="text-xs text-gray-500 italic">Web by 5NYeni &copy; 2026</p>
-            </footer>
+                <div class="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/40 overflow-hidden border border-slate-100">
+                    <div class="overflow-x-auto table-container">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50/50">
+                                    <th class="px-8 py-6 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Informasi Profil</th>
+                                    <th class="px-8 py-6 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Status Keamanan</th>
+                                    <th class="px-8 py-6 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Kredensial</th>
+                                    <th class="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Opsi Lanjutan</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50">
+                                @forelse($guests as $guest)
+                                <tr class="group hover:bg-slate-50/50 transition-all duration-300">
+                                    <td class="px-8 py-6">
+                                        <div class="flex items-center gap-5">
+                                            <div class="relative">
+                                                <div class="w-14 h-14 rounded-2xl {{ $guest->is_incognito ? 'bg-slate-900 shadow-lg shadow-slate-900/20' : 'bg-red-50' }} flex items-center justify-center transition-all group-hover:rotate-6 duration-500">
+                                                    <i class="fas {{ $guest->is_incognito ? 'fa-user-secret text-slate-200' : 'fa-user text-[#800000]' }} text-xl"></i>
+                                                </div>
+                                                @if(!$guest->is_incognito)
+                                                    <span class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-4 border-white rounded-full"></span>
+                                                @endif
+                                            </div>
+                                            <div>
+                                                <div class="text-base font-bold text-slate-800 {{ $guest->is_incognito ? 'italic text-slate-400' : '' }}">
+                                                    {{ $guest->is_incognito ? 'Restricted Identity' : $guest->guest_name }}
+                                                </div>
+                                                <div class="inline-block mt-1 px-2 py-0.5 bg-slate-100 text-[9px] font-bold text-slate-500 rounded uppercase tracking-tighter">
+                                                    UID: {{ strtoupper(substr($guest->id, 0, 8)) }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
 
-        </main>
+                                    <td class="px-8 py-6">
+                                        <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl {{ $guest->is_incognito ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100' }}">
+                                            <span class="relative flex h-2 w-2">
+                                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full {{ $guest->is_incognito ? 'bg-indigo-400' : 'bg-emerald-400' }} opacity-75"></span>
+                                                <span class="relative inline-flex rounded-full h-2 w-2 {{ $guest->is_incognito ? 'bg-indigo-600' : 'bg-emerald-600' }}"></span>
+                                            </span>
+                                            <span class="text-[10px] font-black uppercase tracking-widest">
+                                                {{ $guest->is_incognito ? 'Incognito Mode' : 'Verified Public' }}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <td class="px-8 py-6">
+                                        <div class="flex flex-col">
+                                            <span class="text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">{{ $guest->email }}</span>
+                                            <span class="text-[11px] text-slate-400 flex items-center gap-2 mt-1 italic">
+                                                <i class="far fa-clock text-[#800000]/50"></i>
+                                                Joined {{ $guest->created_at->diffForHumans() }}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <td class="px-8 py-6 text-center">
+                                        <form action="{{ route('guests.toggle-incognito', $guest->id) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="inline-flex items-center gap-3 bg-white border-2 border-slate-100 text-slate-700 px-5 py-2.5 rounded-2xl text-[10px] font-black hover:border-[#800000] hover:text-[#800000] hover:bg-[#800000]/5 transition-all active:scale-95 shadow-sm">
+                                                <i class="fas fa-shield-alt"></i>
+                                                SWITCH PRIVACY
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="4" class="py-32 text-center">
+                                        <div class="flex flex-col items-center">
+                                            <div class="w-40 h-40 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                                                <i class="fas fa-folder-open text-5xl text-slate-200"></i>
+                                            </div>
+                                            <h3 class="text-slate-800 font-bold text-lg">No Guest Records</h3>
+                                            <p class="text-slate-400 text-sm mt-1">Database is currently empty or filtered.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <footer class="mt-16 pt-10 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div class="flex items-center gap-4">
+                        <div class="flex -space-x-2">
+                            <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-200"></div>
+                            <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-300"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">System Status: <span class="text-emerald-500 italic">Optimal</span></p>
+                    </div>
+                    <p class="text-[11px] font-medium text-slate-400 tracking-wide">
+                        &copy; 2026 <span class="text-slate-900 font-bold underline decoration-[#800000]">Hotel SIG</span>. Developed by <span class="text-slate-900">5NYeni</span>.
+                    </p>
+                </footer>
+            </main>
+        </div>
     </div>
 
 </body>

@@ -19,34 +19,35 @@ class RoleController extends Controller
     }
 
     public function store(Request $request) {
-        $role = Role::create(['name' => $request->name]);
+        $request->validate(['name' => 'required']);
+        
+        // Simpan ke kolom NAME (besar) agar sinkron dengan seeder
+        $role = Role::create(['NAME' => strtoupper($request->name)]);
+        
         if ($request->has('menu_ids')) {
-            // Ini yang nge-save checklist menu ke role
             $role->menus()->sync($request->menu_ids);
         }
         return redirect()->route('roles.index')->with('success', 'Role baru berhasil dibuat!');
     }
 
     public function edit(Role $role) {
-        if ($role->name === 'Superadmin') abort(403);
+        if ($role->NAME === 'SUPERADMIN') abort(403);
         $all_menus = Menu::all();
         return view('roles.edit', compact('role', 'all_menus'));
     }
 
     public function update(Request $request, Role $role) {
-        $role->update(['name' => $request->name]);
-        // Update checklist menu (sync otomatis nambah/hapus yang nggak di-ceklis)
+        $role->update(['NAME' => strtoupper($request->name)]);
         $role->menus()->sync($request->menu_ids ?? []);
         return redirect()->route('roles.index')->with('success', 'Akses Role berhasil diupdate!');
     }
 
     public function destroy(Role $role)
     {
-        if ($role->name === 'Superadmin') {
-            return redirect()->back()->with('error', 'Role Superadmin tidak bisa dihapus, bro!');
+        if ($role->NAME === 'SUPERADMIN') {
+            return redirect()->back()->with('error', 'Role Superadmin tidak bisa dihapus!');
         }
         $role->delete();
-
-        return redirect()->route('roles.index')->with('success', 'Role berhasil dihapus dari sistem!');
+        return redirect()->route('roles.index')->with('success', 'Role berhasil dihapus!');
     }
 }

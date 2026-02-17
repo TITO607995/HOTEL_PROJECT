@@ -1,95 +1,98 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\AssignRoleController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RoomController;
-use App\Http\Controllers\GuestController;
-use App\Models\Room; 
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
+use App\Models\Room;
 
+// 1. REDIRECT AWAL
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// 2. SEMUA ROUTE YANG WAJIB LOGIN
+Route::middleware(['auth'])->group(function () {
 
-Route::get('/dashboard', function () {
-    $stats = [
-        'Standard' => \App\Models\Room::where('type', 'Standard')->count(),
-        'Deluxe'   => \App\Models\Room::where('type', 'Deluxe')->count(),
-        'Suite'    => \App\Models\Room::where('type', 'Suite')->count(),
-    ];
+    // --- DASHBOARD ---
+    Route::get('/dashboard', function () {
+        $stats = [
+            'Standard' => Room::where('type', 'Standard')->count(),
+            'Deluxe'   => Room::where('type', 'Deluxe')->count(),
+            'Suite'    => Room::where('type', 'Suite')->count(),
+        ];
 
-    $roomList = \App\Models\Room::with(['reservations' => function($q) {
-            $q->latest();
-        }])
-        ->where('status', '!=', 'available')
-        ->get()
-        ->map(function($room) {
-            $latestRes = $room->reservations->first();
-            
-            $leftStatus = ($room->status == 'vacant dirty') ? 'Dirty' : 'In-house';
-            $paymentMethod = $latestRes ? $latestRes->payment_method : '-';
-            $isPaid = $latestRes && $latestRes->reservation_type == 'guaranteed'; 
+        $roomList = Room::with(['reservations' => function($q) {
+                $q->latest();
+            }])
+            ->where('status', '!=', 'available')
+            ->get()
+            ->map(function($room) {
+                $latestRes = $room->reservations->first();
+                $leftStatus = ($room->status == 'vacant dirty') ? 'Dirty' : 'In-house';
+                $paymentMethod = $latestRes ? $latestRes->payment_method : '-';
+                $isPaid = $latestRes && $latestRes->reservation_type == 'guaranteed'; 
 
-            return [
-                'no'        => $room->room_number,
-                'type'      => $room->type,
-                'left_status'=> $leftStatus,
-                'payment'   => $paymentMethod,
-                'is_paid'   => $isPaid,
-                'action'    => strtoupper($room->status),
-                'action_color' => ($room->status == 'occupied') ? 'bg-red-500' : (($room->status == 'vacant dirty') ? 'bg-yellow-500' : 'bg-orange-500'),
-                'visibility' => ($latestRes && $latestRes->is_incognito) ? 'Incognito' : 'Public'
-            ];
-        });
+                return [
+                    'no'           => $room->room_number,
+                    'type'         => $room->type,
+                    'left_status'  => $leftStatus,
+                    'payment'      => $paymentMethod,
+                    'is_paid'      => $isPaid,
+                    'action'       => strtoupper($room->status),
+                    'action_color' => ($room->status == 'occupied') ? 'bg-red-500' : (($room->status == 'vacant dirty') ? 'bg-yellow-500' : 'bg-orange-500'),
+                    'visibility'   => ($latestRes && $latestRes->is_incognito) ? 'Incognito' : 'Public'
+                ];
+            });
 
-    return view('dashboard', compact('stats', 'roomList'));
-})->middleware(['auth'])->name('dashboard');
+        return view('dashboard', compact('stats', 'roomList'));
+    })->name('dashboard');
 
-Route::get('/check-out', [ReservationController::class, 'checkoutPage'])->name('reservations.checkout.page');
-Route::post('/check-out/{id}', [ReservationController::class, 'processCheckout'])->name('reservations.checkout.process');
-Route::get('/guests', [ReservationController::class, 'guestIndex'])->name('guests.index');
-Route::post('/guests/incognito/{id}', [ReservationController::class, 'toggleIncognito'])->name('guests.toggle-incognito');
-Route::post('/reservasi/extend/{id}', [ReservationController::class, 'extend'])->name('reservations.extend');
-Route::get('/rooms/maintenance', [RoomController::class, 'maintenancePage'])->name('rooms.maintenance.page');
-Route::post('/rooms/maintenance/{id}', [RoomController::class, 'updateMaintenance'])->name('rooms.maintenance.update');
+    // --- MANAJEMEN KAMAR ---
+    Route::prefix('rooms')->group(function () {
+        Route::get('/', [RoomController::class, 'index'])->name('rooms.index');
+        Route::post('/store', [RoomController::class, 'store'])->name('room.store');
+        
+        // Maintenance (OO/OS)
+        Route::get('/maintenance', [RoomController::class, 'maintenancePage'])->name('rooms.maintenance.page');
+        Route::post('/maintenance/{id}', [RoomController::class, 'updateMaintenance'])->name('rooms.maintenance.update');
+    });
 
-// --- SEMUA ROUTE YANG BUTUH LOGIN ---
-Route::middleware('auth')->group(function () {
+    // --- RESERVASI & TAMU ---
+    Route::get('/guests', [ReservationController::class, 'guestIndex'])->name('guests.index');
+    Route::post('/guests/incognito/{id}', [ReservationController::class, 'toggleIncognito'])->name('guests.toggle-incognito');
+
+    Route::prefix('reservasi')->group(function () {
+        Route::get('/', [ReservationController::class, 'index'])->name('reservations.index');
+        Route::get('/tambah', [ReservationController::class, 'create'])->name('reservations.create');
+        Route::post('/simpan', [ReservationController::class, 'store'])->name('reservations.store');
+        Route::post('/extend/{id}', [ReservationController::class, 'extend'])->name('reservations.extend');
+        
+        // Registration & Check-in
+        Route::get('/registration', [ReservationController::class, 'registration'])->name('reservations.registration');
+        Route::post('/checkin/{id}', [ReservationController::class, 'checkin'])->name('reservations.checkin');
+        
+        // Check-out
+        Route::get('/check-out', [ReservationController::class, 'checkoutPage'])->name('reservations.checkout.page');
+        Route::post('/check-out/{id}', [ReservationController::class, 'processCheckout'])->name('reservations.checkout.process');
+    });
+
+    // --- LAPORAN & KARYAWAN (KHUSUS ADMIN) ---
+    // Kamu bisa menambahkan middleware 'can:admin' jika sudah mengatur Policy/Gate
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     
-    // ROOMS MANAGEMENT
-    Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
-    Route::post('/rooms/store', [RoomController::class, 'store'])->name('room.store');
+    Route::prefix('employees')->group(function () {
+        Route::get('/create', [EmployeeController::class, 'create'])->name('employees.create');
+        Route::post('/store', [EmployeeController::class, 'store'])->name('employees.store');
+    });
 
-    // RESERVASI
-    Route::get('/reservasi', [ReservationController::class, 'index'])->name('reservations.index');
-    Route::get('/reservasi/tambah', [ReservationController::class, 'create'])->name('reservations.create');
-    Route::post('/reservasi/simpan', [ReservationController::class, 'store'])->name('reservations.store');
-
-    // REGISTRATION & CHECK-IN
-    Route::get('/registration', [ReservationController::class, 'registration'])->name('reservations.registration');
-    Route::post('/checkin/{id}', [ReservationController::class, 'checkin'])->name('reservations.checkin');
-
-    // USER PROFILE
+    // --- PROFILE USER ---
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    //TAMU WEB
-
-    // --- KHUSUS SUPERADMIN ---
-    Route::middleware('can:superadmin-only')->group(function () {
-        Route::resource('roles', RoleController::class);
-        Route::resource('users', UserController::class);
-        
-        // Assign Role Manual
-        Route::get('/assign-role', [AssignRoleController::class, 'index'])->name('assign-role.index');
-        Route::get('/assign-role/{user}/edit', [AssignRoleController::class, 'edit'])->name('assign-role.edit');
-        Route::put('/assign-role/{user}', [AssignRoleController::class, 'update'])->name('assign-role.update');
-    });
 });
 
 require __DIR__.'/auth.php';

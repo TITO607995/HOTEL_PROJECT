@@ -7,18 +7,23 @@ use Illuminate\Http\Request;
 
 class RoomController extends Controller
 {
+    // Tambahkan fungsi ini untuk menangani Route Dashboard
+    public function dashboard()
+    {
+        $rooms = Room::all(); 
+        return view('dashboard', compact('rooms')); // Pastikan nama file adalah dashboard.blade.php
+    }
+
     public function index(Request $request)
     {
         $query = Room::query();
 
-        // SEARCH NOMOR KAMAR
         if ($request->room_number) {
             $query->where('room_number', 'like', '%' . $request->room_number . '%');
         }
 
         $rooms = $query->get();
 
-        // SIMULASI FOTO JIKA TIDAK ADA IMAGE
         $simulasiFoto = [
             'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=500',
             'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=500',
@@ -38,23 +43,21 @@ class RoomController extends Controller
     }
 
     public function maintenancePage()
-{
-    // Kita ambil semua kamar agar bisa di-setting satu per satu
-    $rooms = \App\Models\Room::all();
-    return view('rooms.maintenance', compact('rooms'));
-}
+    {
+        $rooms = Room::all();
+        return view('rooms.maintenance', compact('rooms'));
+    }
 
-public function updateMaintenance(Request $request, $id)
-{
-    $room = \App\Models\Room::findOrFail($id);
-    
-    // Pastikan status yang dikirim adalah 'available', 'booked', 'oo', atau 'os'
-    $room->update([
-        'status' => $request->status,
-        'maintenance_type' => $request->status == 'available' ? null : $request->status,
-        'maintenance_notes' => $request->status == 'available' ? null : $request->notes,
-    ]);
+    public function updateMaintenance(Request $request, $id)
+    {
+        $room = Room::findOrFail($id);
+        
+        // Perbaikan logika update agar status database sinkron
+        $room->update([
+            'status' => $request->status, // Misal: 'available', 'occupied', 'vacant dirty'
+            'maintenance_notes' => $request->notes,
+        ]);
 
-    return redirect()->back()->with('success', 'Status kamar ' . $room->room_number . ' berhasil diperbarui!');
-}
+        return redirect()->back()->with('success', 'Status kamar ' . $room->room_number . ' berhasil diperbarui!');
+    }
 }

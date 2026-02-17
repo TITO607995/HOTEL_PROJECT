@@ -6,12 +6,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <title>Dashboard - Hotel SIG</title>
 
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
         
-        /* Custom Scrollbar Pink-Maroon */
         @media (min-width: 1024px) {
             .custom-scrollbar::-webkit-scrollbar { width: 6px; }
             .custom-scrollbar::-webkit-scrollbar-track { background: #F0E7E7; border-radius: 10px; }
@@ -45,7 +45,7 @@
                     <h1 class="text-3xl lg:text-4xl font-extrabold text-gray-800 tracking-tight">
                         Dashboard <span class="text-[#800000]">Hotel SIG</span>
                     </h1>
-                    <p class="text-gray-400 text-sm mt-1 font-medium italic">Laporan hunian kamar dan status reservasi hari ini.</p>
+                    <p class="text-gray-400 text-sm mt-1 font-medium italic">Status real-time ketersediaan kamar dan reservasi.</p>
                 </div>
 
                 <div class="bg-[#F0E7E7] px-6 py-4 rounded-3xl border border-pink-200 flex items-center gap-4 shadow-sm min-w-[240px]">
@@ -75,7 +75,7 @@
                                 <div class="w-6 h-6 rounded-full border-2 border-white bg-pink-100"></div>
                                 <div class="w-6 h-6 rounded-full border-2 border-white bg-pink-200"></div>
                             </div>
-                            <span class="text-[9px] font-bold text-pink-500 uppercase tracking-widest italic">Tersedia untuk dipesan</span>
+                            <span class="text-[9px] font-bold text-pink-500 uppercase tracking-widest italic">Total Inventory</span>
                         </div>
                     </div>
                 </div>
@@ -88,7 +88,7 @@
                         <div class="w-10 h-10 rounded-xl bg-[#800000] flex items-center justify-center text-white">
                             <i class="fas fa-list-ul"></i>
                         </div>
-                        <h2 class="text-xl font-extrabold text-gray-800 tracking-tight">Monitoring Kamar Terisi</h2>
+                        <h2 class="text-xl font-extrabold text-gray-800 tracking-tight">Kamar Terisi & Maintenance</h2>
                     </div>
                     <div class="flex items-center gap-2">
                          <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
@@ -104,9 +104,9 @@
                                 <th class="px-6 py-4">Tipe Unit</th>
                                 <th class="px-6 py-4">Status</th>
                                 <th class="px-6 py-4">Payment</th>
-                                <th class="px-6 py-4 text-center">Pembayaran</th>
+                                <th class="px-6 py-4 text-center">Status Bayar</th>
                                 <th class="px-6 py-4 text-center">Action</th>
-                                <th class="px-6 py-4 text-right">Masa In</th>
+                                <th class="px-6 py-4 text-right">Visibility</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
@@ -126,7 +126,7 @@
                                 </td>
                                 <td class="px-6 py-6">
                                     <p class="text-gray-800 font-bold text-sm">{{ $room['payment'] }}</p>
-                                    <p class="text-[9px] text-gray-400 uppercase font-bold tracking-widest mt-1">Confirmed Guest</p>
+                                    <p class="text-[9px] text-gray-400 uppercase font-bold tracking-widest mt-1">Metode</p>
                                 </td>
                                 <td class="px-6 py-6 text-center">
                                     @if($room['is_paid'])
@@ -155,7 +155,7 @@
                                 <td colspan="7" class="py-20 text-center">
                                     <div class="flex flex-col items-center opacity-30">
                                         <i class="fas fa-bed text-5xl mb-4"></i>
-                                        <p class="font-bold text-sm uppercase tracking-[0.3em]">Belum Ada Kamar Terisi</p>
+                                        <p class="font-bold text-sm uppercase tracking-[0.3em]">Semua Kamar Ready (Available)</p>
                                     </div>
                                 </td>
                             </tr>
