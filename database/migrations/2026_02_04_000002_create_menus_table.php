@@ -12,12 +12,13 @@ return new class extends Migration
     public function up(): void {
     Schema::create('menus', function (Blueprint $table) {
         $table->id();
-        $table->string('name'); // e.g., Data Kamar
-        $table->string('url');  // e.g., /kamar
-        $table->string('icon')->nullable();
+        $table->string('name');       // Nama Tampilan (e.g. Data Kamar)
+        $table->string('route_name'); // Nama Route (e.g. rooms.index)
+        $table->string('icon')->nullable(); // Class Icon
+        $table->integer('order')->default(0); // Urutan Menu
         $table->timestamps();
     });
-    }
+}
 
     /**
      * Reverse the migrations.

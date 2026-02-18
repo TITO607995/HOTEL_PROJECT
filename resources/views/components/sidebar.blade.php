@@ -1,32 +1,45 @@
-<aside class="w-64 bg-[#790000] text-white p-6 flex flex-col shadow-xl h-screen sticky top-0 flex-shrink-0">
+<aside class="w-64 bg-[#790000] text-white p-6 flex flex-col shadow-2xl h-screen sticky top-0 flex-shrink-0 z-50">
+    
+    {{-- HEADER: LOGO --}}
     <div class="mb-8 text-center flex-shrink-0">
-        <span class="text-xl font-bold tracking-widest uppercase italic">Hotel <span class="text-red-200">SIG</span></span>
-        <hr class="opacity-20 mt-2 border-white">
+        <a href="{{ route('dashboard') }}" class="block hover:scale-105 transition-transform duration-300">
+            <span class="text-2xl font-black tracking-widest uppercase italic font-sans">Hotel <span class="text-red-200">SIG</span></span>
+        </a>
+        <div class="h-1 w-12 bg-white/20 mx-auto mt-3 rounded-full"></div>
     </div>
 
+    {{-- NAVIGATION MENU --}}
     <nav class="space-y-2 flex-1 overflow-y-auto custom-scroll pr-2">
         
+        {{-- 1. DASHBOARD --}}
         <a href="{{ route('dashboard') }}" 
-           class="flex items-center space-x-3 p-3 rounded-lg transition {{ request()->is('dashboard') ? 'bg-white/20 font-bold shadow-inner' : 'hover:bg-white/10' }}">
-            <span class="text-lg">📊</span> 
+           class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 
+           {{ request()->routeIs('dashboard') ? 'bg-white/20 font-bold shadow-inner text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+            <span class="text-lg w-6 text-center">📊</span> 
             <span>Dashboard</span>
         </a>
 
+        {{-- 2. MANAJEMEN KAMAR --}}
+        {{-- Link aktif jika di halaman rooms.* tapi BUKAN di halaman maintenance --}}
         <a href="{{ route('rooms.index') }}" 
-           class="flex items-center space-x-3 p-3 rounded-lg transition {{ request()->is('room*') && !request()->is('rooms/maintenance*') ? 'bg-white/20 font-bold shadow-inner' : 'hover:bg-white/10' }}">
-            <span class="text-lg">🛏️</span> 
-            <span>Manajemen Kamar</span>
+           class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 
+           {{ request()->routeIs('rooms.index') || (request()->is('rooms*') && !request()->is('rooms/maintenance*')) ? 'bg-white/20 font-bold shadow-inner text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+            <span class="text-lg w-6 text-center">🛏️</span> 
+            <span>Data Kamar</span>
         </a>
 
-        <div x-data="{ open: {{ request()->is('reservasi*', 'registration*', 'check-out*') ? 'true' : 'false' }} }">
+        {{-- 3. RESERVASI (DROPDOWN) --}}
+        {{-- Logic: Terbuka jika URL mengandung kata reservasi, registration, atau check-out --}}
+        <div x-data="{ open: {{ request()->routeIs('reservations.*') || request()->is('reservasi*', 'registration*', 'check-out*') ? 'true' : 'false' }} }">
             <button type="button" 
                 @click="open = !open" 
-                class="w-full flex items-center justify-between p-3 rounded-lg transition {{ request()->is('reservasi*', 'registration*', 'check-out*') ? 'bg-white/20 font-bold' : 'hover:bg-white/10' }}">
+                class="w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 group 
+                {{ request()->routeIs('reservations.*') || request()->is('reservasi*', 'registration*', 'check-out*') ? 'bg-white/20 font-bold text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
                 <div class="flex items-center space-x-3">
-                    <span class="text-lg">📅</span> 
+                    <span class="text-lg w-6 text-center">📅</span> 
                     <span>Reservasi</span>
                 </div>
-                <i class="fas fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
+                <i class="fas fa-chevron-down text-[10px] transition-transform duration-300 opacity-70 group-hover:opacity-100" :class="open ? 'rotate-180' : ''"></i>
             </button>
 
             <div x-show="open" 
@@ -34,38 +47,68 @@
                 x-transition:enter="transition ease-out duration-200"
                 x-transition:enter-start="opacity-0 -translate-y-2"
                 x-transition:enter-end="opacity-100 translate-y-0"
-                class="mt-2 ml-4 space-y-1 border-l-2 border-white/10 pl-4">
+                class="mt-1 ml-4 space-y-1 border-l-2 border-white/10 pl-3">
                 
-                <a href="{{ route('reservations.index') }}" class="block p-2 text-sm {{ request()->is('reservasi*') ? 'text-white font-bold' : 'text-white/70 hover:text-white' }}">📝 Monitoring</a>
-                <a href="{{ route('reservations.registration') }}" class="block p-2 text-sm {{ request()->is('registration*') ? 'text-white font-bold' : 'text-white/70 hover:text-white' }}">🔑 Check-in</a>
-                <a href="{{ route('reservations.checkout.page') }}" class="block p-2 text-sm {{ request()->is('check-out*') ? 'text-white font-bold' : 'text-white/70 hover:text-white' }}">🚪 Check-out</a>
+                <a href="{{ route('reservations.index') }}" 
+                   class="block p-2 rounded-lg text-sm transition-colors {{ request()->routeIs('reservations.index') ? 'text-white font-bold bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/5' }}">
+                   📝 Monitoring
+                </a>
+                <a href="{{ route('reservations.registration') }}" 
+                   class="block p-2 rounded-lg text-sm transition-colors {{ request()->routeIs('reservations.registration') ? 'text-white font-bold bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/5' }}">
+                   🔑 Check-in
+                </a>
+                <a href="{{ route('reservations.checkout.page') }}" 
+                   class="block p-2 rounded-lg text-sm transition-colors {{ request()->routeIs('reservations.checkout.page') ? 'text-white font-bold bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/5' }}">
+                   🚪 Check-out
+                </a>
             </div>
         </div>
 
+        {{-- 4. TAMU --}}
         <a href="{{ route('guests.index') }}" 
-           class="flex items-center space-x-3 p-3 rounded-lg transition {{ request()->is('guests*') ? 'bg-white/20 font-bold shadow-inner' : 'hover:bg-white/10' }}">
-            <span class="text-lg">👥</span> 
-            <span>Tamu</span>
+           class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 
+           {{ request()->routeIs('guests.*') ? 'bg-white/20 font-bold shadow-inner text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+            <span class="text-lg w-6 text-center">👥</span> 
+            <span>Buku Tamu</span>
         </a>
 
-        @if(auth()->user()->role && strtoupper(auth()->user()->role->name) === 'SUPERADMIN')
-        <div class="pt-4 mt-4 border-t border-white/10">
-            <p class="text-[10px] uppercase text-white/40 font-bold mb-2 ml-3 tracking-widest">Administrator</p>
+        {{-- PEMBATAS SECTION ADMIN --}}
+        @if(auth()->check() && auth()->user()->role && (auth()->user()->role->name === 'Superadmin' || auth()->user()->role->name === 'SUPERADMIN'))
+        
+        <div class="pt-6 mt-2">
+            <p class="px-3 text-[10px] uppercase text-white/40 font-black mb-3 tracking-widest">Administrator</p>
+            <div class="border-t border-white/10 mb-3 mx-2"></div>
             
+            {{-- 5. STATUS OO/OS (MAINTENANCE) --}}
             <a href="{{ route('rooms.maintenance.page') }}" 
-                class="flex items-center space-x-3 p-3 rounded-lg transition {{ request()->is('rooms/maintenance*') ? 'bg-white/20 font-bold shadow-inner' : 'hover:bg-white/10' }}">
-                 <span class="text-lg">🛠️</span> 
+               class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 
+               {{ request()->routeIs('rooms.maintenance.*') ? 'bg-white/20 font-bold shadow-inner text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+                 <span class="text-lg w-6 text-center">🛠️</span> 
                  <span>Status OO/OS</span>
             </a>
             
-            <a href="{{ route('employees.create') }}" 
-                class="flex items-center space-x-3 p-3 rounded-lg transition {{ request()->is('employees/create*') ? 'bg-white/20 font-bold shadow-inner' : 'hover:bg-white/10' }}">
-                 <span class="text-lg">👔</span> 
-                 <span>Tambah Karyawan</span>
+            {{-- 6. MANAJEMEN KARYAWAN (Link ke Index, bukan Create) --}}
+            <a href="{{ route('employees.index') }}" 
+               class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 
+               {{ request()->routeIs('employees.*') ? 'bg-white/20 font-bold shadow-inner text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+                 <span class="text-lg w-6 text-center">👔</span> 
+                 <span>Karyawan</span>
             </a>
-             <a href="{{route('reports.index')}}" 
-                class="flex items-center space-x-3 p-3 rounded-lg transition {{ request()->is('reports*') ? 'bg-white/20 font-bold shadow-inner' : 'hover:bg-white/10' }}">
-                 <span class="text-lg">📊</span> 
+
+            {{-- 7. ROLE & AKSES (Baru Ditambahkan) --}}
+            <a href="{{ route('roles.index') }}" 
+               class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 
+               {{ request()->routeIs('roles.*') ? 'bg-white/20 font-bold shadow-inner text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+                 <span class="text-lg w-6 text-center">🔐</span> 
+                 <span>Role & Akses</span>
+            </a>
+
+             {{-- 8. LAPORAN --}}
+             {{-- Pastikan route 'reports.index' ada, kalau belum ada bisa dikasih '#' dulu --}}
+             <a href="{{ Route::has('reports.index') ? route('reports.index') : '#' }}" 
+                class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 
+                {{ request()->routeIs('reports.*') ? 'bg-white/20 font-bold shadow-inner text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+                 <span class="text-lg w-6 text-center">📈</span> 
                  <span>Laporan</span>
             </a>
         </div>
@@ -73,14 +116,17 @@
 
     </nav>
 
-    <div class="pt-4 border-t border-white/20 flex-shrink-0">
+    {{-- FOOTER: LOGOUT & INFO --}}
+    <div class="pt-4 border-t border-white/20 flex-shrink-0 mt-2">
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-red-800 transition text-red-100 font-semibold group">
-                <span class="text-lg group-hover:scale-110 transition-transform">🚪</span> 
-                <span>Keluar</span>
+            <button type="submit" class="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-red-900 transition-colors text-red-100 font-semibold group">
+                <span class="text-lg w-6 text-center group-hover:-translate-x-1 transition-transform">🚪</span> 
+                <span>Keluar Sistem</span>
             </button>
         </form>
-        <div class="text-[10px] text-white/30 text-center mt-4 italic tracking-wide">Web by 5NYeni</div>
+        <div class="text-[9px] text-white/30 text-center mt-4 italic tracking-wider font-light">
+            Hotel SIG Management v2.1<br>Web by 5NYeni
+        </div>
     </div>
 </aside>

@@ -19,6 +19,7 @@ class Reservation extends Model
         'departure_date',
         'country',
         'city',
+        'status',
         'place_birth',
         'payment_method',
         'reservation_type'

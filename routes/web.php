@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Room;
@@ -12,7 +13,6 @@ use App\Models\Room;
 Route::get('/', function () {
     return redirect()->route('login');
 });
-
 // 2. SEMUA ROUTE YANG WAJIB LOGIN
 Route::middleware(['auth'])->group(function () {
 
@@ -60,6 +60,12 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/maintenance/{id}', [RoomController::class, 'updateMaintenance'])->name('rooms.maintenance.update');
     });
 
+    Route::get('/fix-data', function() {
+        // Ubah semua reservasi yang belum check-out menjadi 'booked'
+        \App\Models\Reservation::whereNull('status')->update(['status' => 'booked']);
+        return "Data berhasil diperbaiki! Silakan buka halaman Check-in.";
+    });
+
     // --- RESERVASI & TAMU ---
     Route::get('/guests', [ReservationController::class, 'guestIndex'])->name('guests.index');
     Route::post('/guests/incognito/{id}', [ReservationController::class, 'toggleIncognito'])->name('guests.toggle-incognito');
@@ -78,6 +84,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/check-out', [ReservationController::class, 'checkoutPage'])->name('reservations.checkout.page');
         Route::post('/check-out/{id}', [ReservationController::class, 'processCheckout'])->name('reservations.checkout.process');
     });
+
+    Route::resource('employees', EmployeeController::class);
+
+    // 2. Route Role (Otomatis bikin roles.index, create, etc)
+    Route::resource('roles', RoleController::class);
 
     // --- LAPORAN & KARYAWAN (KHUSUS ADMIN) ---
     // Kamu bisa menambahkan middleware 'can:admin' jika sudah mengatur Policy/Gate

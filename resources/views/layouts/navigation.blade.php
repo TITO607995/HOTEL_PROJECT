@@ -1,14 +1,20 @@
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
     @php
         $user = auth()->user();
+        $menus = collect(); // Default koleksi kosong
         
         // 1. Ambil data menu dengan aman
         if ($user && $user->role) {
-            // Gunakan strtoupper untuk antisipasi perbedaan penulisan di DB (Superadmin vs SUPERADMIN)
+            // Gunakan strtoupper untuk antisipasi perbedaan penulisan di DB
             $isadmin = strtoupper($user->role->name) === 'SUPERADMIN';
-            $menus = $isadmin ? \App\Models\Menu::all() : $user->role->menus;
-        } else {
-            $menus = collect(); // Koleksi kosong agar foreach tidak crash
+            
+            if ($isadmin) {
+                // Admin dapat semua menu, diurutkan berdasarkan 'order'
+                $menus = \App\Models\Menu::orderBy('order')->get();
+            } else {
+                // User biasa dapat menu sesuai relasi, diurutkan
+                $menus = $user->role->menus()->orderBy('order')->get();
+            }
         }
     @endphp
 
@@ -17,7 +23,7 @@
             <div class="flex">
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                        <x-application-logo class="block h-9 w-auto fill-current text-[#800000]" />
                     </a>
                 </div>
 
@@ -27,10 +33,16 @@
                     </x-nav-link>
 
                     @foreach($menus as $menu)
+                        {{-- Skip Dashboard karena sudah di-hardcode di atas --}}
                         @if(strtolower($menu->name) != 'dashboard')
-                            <x-nav-link :href="url($menu->url)" :active="request()->is(trim($menu->url, '/'))">
-                                {{ $menu->name }}
-                            </x-nav-link>
+                            
+                            {{-- Cek apakah route ada di web.php agar tidak error --}}
+                            @if(Route::has($menu->route_name))
+                                <x-nav-link :href="route($menu->route_name)" :active="request()->routeIs($menu->route_name . '*')">
+                                    {{ $menu->name }}
+                                </x-nav-link>
+                            @endif
+
                         @endif
                     @endforeach
                 </div>
@@ -40,8 +52,11 @@
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            {{-- FIX ERROR DISINI: Tambahkan ?? untuk handle jika role null --}}
-                            <div>{{ $user->name ?? 'Guest' }} ({{ $user->role->name ?? 'Tanpa Role' }})</div>
+                            {{-- Tampilkan Nama & Role --}}
+                            <div class="text-right leading-tight">
+                                <div class="font-bold">{{ $user->name ?? 'Guest' }}</div>
+                                <div class="text-[10px] text-gray-400 uppercase tracking-wider">{{ $user->role->name ?? 'Tanpa Role' }}</div>
+                            </div>
 
                             <div class="ms-1">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -86,9 +101,11 @@
 
             @foreach($menus as $menu)
                 @if(strtolower($menu->name) != 'dashboard')
-                    <x-responsive-nav-link :href="url($menu->url)" :active="request()->is(trim($menu->url, '/'))">
-                        {{ $menu->name }}
-                    </x-responsive-nav-link>
+                    @if(Route::has($menu->route_name))
+                        <x-responsive-nav-link :href="route($menu->route_name)" :active="request()->routeIs($menu->route_name . '*')">
+                            {{ $menu->name }}
+                        </x-responsive-nav-link>
+                    @endif
                 @endif
             @endforeach
         </div>
@@ -97,6 +114,7 @@
             <div class="px-4">
                 <div class="font-medium text-base text-gray-800">{{ $user->name ?? 'Guest' }}</div>
                 <div class="font-medium text-sm text-gray-500">{{ $user->email ?? '' }}</div>
+                <div class="text-xs text-[#800000] font-bold mt-1">{{ $user->role->name ?? 'No Role' }}</div>
             </div>
 
             <div class="mt-3 space-y-1">
