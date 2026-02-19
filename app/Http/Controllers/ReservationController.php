@@ -5,36 +5,31 @@ namespace App\Http\Controllers;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\Checkout;
+use App\Models\Guest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class ReservationController extends Controller
 {
-    // 1. HALAMAN DAFTAR RESERVASI (TABEL)
+    // 1. HALAMAN DAFTAR RESERVASI
     public function index()
     {
         $rooms = Room::all(); 
-
-        // Ambil data reservasi terbaru beserta data kamarnya
         $reservations = Reservation::with('room')->latest()->get();
-
-        // Kirim $rooms dan $reservations ke view
         return view('reservations.index', compact('reservations', 'rooms'));
     }
 
     // 2. FORM TAMBAH RESERVASI
     public function create()
     {
-        // Hanya tampilkan kamar yang available agar tidak double booking
         $rooms = Room::where('status', 'available')->get();
         return view('reservations.create', compact('rooms'));
     }
 
-    // 3. PROSES SIMPAN RESERVASI BARU
+    // 3. PROSES SIMPAN RESERVASI BARU (LANGSUNG SYNC KE GUEST & REDIRECT)
     public function store(Request $request)
     {
-        // Validasi Input
         $request->validate([
             'room_id'        => 'required|exists:rooms,id',
             'guest_name'     => 'required|string|max:255',
@@ -45,7 +40,7 @@ class ReservationController extends Controller
         ]);
 
         DB::transaction(function () use ($request) {
-            // A. Simpan Data Reservasi
+            // A. Simpan data Reservasi
             Reservation::create([
                 'room_id'          => $request->room_id,
                 'guest_name'       => $request->guest_name,
@@ -59,93 +54,78 @@ class ReservationController extends Controller
                 'country'          => $request->country,
                 'city'             => $request->city,
                 'place_birth'      => $request->place_birth,
-                'status'           => 'booked', // Status awal
+                'status'           => 'booked',
             ]);
 
-            // B. Update Status Kamar jadi 'booked'
-            // Agar di dashboard warnanya jadi Biru/Booked
+            // B. LANGSUNG INPUT KE TABEL GUEST (Ini yang lo minta)
+            Guest::updateOrCreate(
+                ['email' => $request->email], // Cari berdasarkan email
+                [
+                    'guest_name'   => $request->guest_name,
+                    'phone'        => $request->phone,
+                    'is_incognito' => false
+                ]
+            );
+
+            // C. Update status kamar
             Room::where('id', $request->room_id)->update(['status' => 'booked']);
         });
 
-        return redirect()->route('reservations.index')
-            ->with('success', 'Reservasi berhasil! Kamar kini berstatus Booked.');
+        // D. REDIRECT LANGSUNG KE HALAMAN GUEST
+        return redirect()->route('guests.index')->with('success', 'Reservasi berhasil & data tamu telah diperbarui!');
     }
 
-    // 4. HALAMAN CHECK-IN (REGISTRATION)
+    // 4. HALAMAN CHECK-IN
     public function registration()
     {
         $reservations = Reservation::with('room')
                         ->where(function($query) {
-                            $query->where('status', 'booked')
-                                  ->orWhereNull('status'); 
-                        })
-                        // Opsional: Jika ingin filter hanya hari ini, uncomment baris bawah ini
-                        // ->whereDate('arrival_date', '<=', now()) 
-                        ->latest()
-                        ->get();
+                            $query->where('status', 'booked')->orWhereNull('status'); 
+                        })->latest()->get();
                         
         return view('reservations.registration', compact('reservations'));
     }
+
     // 5. PROSES CHECK-IN
     public function checkin($id)
     {
         DB::transaction(function () use ($id) {
             $reservation = Reservation::findOrFail($id);
-            
-            // Update Reservasi
-            $reservation->update([
-                'status' => 'checked-in',
-                'reservation_type' => 'guaranteed' // Anggap tamu datang = guaranteed
-            ]);
-
-            // Update Kamar jadi 'occupied' (Merah/Terisi)
+            $reservation->update(['status' => 'checked-in', 'reservation_type' => 'guaranteed']);
             $reservation->room->update(['status' => 'occupied']);
         });
 
-        return redirect()->back()->with('success', 'Check-in Berhasil! Kamar sekarang Occupied.');
+        return redirect()->back()->with('success', 'Check-in Berhasil!');
     }
 
-    // 6. HALAMAN CHECK-OUT (INVOICE)
+    // 6. HALAMAN CHECK-OUT
     public function checkoutPage()
     {
-        // Tampilkan tamu yang sedang menginap (Checked-in / Occupied)
-        $reservations = Reservation::where('status', 'checked-in')
-                        ->with('room')
-                        ->get();
-
+        $reservations = Reservation::where('status', 'checked-in')->with('room')->get();
         return view('reservations.checkout', compact('reservations'));
     }
 
+    // 7. DETAIL CHECK-OUT
     public function checkout($id)
     {
         $reservation = Reservation::with('room')->findOrFail($id);
-        
-        // Hitung estimasi biaya kamar
         $checkIn = Carbon::parse($reservation->arrival_date);
         $checkOut = Carbon::parse($reservation->departure_date);
-        $nights = $checkIn->diffInDays($checkOut);
-        if ($nights <= 0) $nights = 1; 
+        $nights = $checkIn->diffInDays($checkOut) ?: 1;
 
-        // Ambil harga kamar (pastikan tabel rooms punya kolom price, kalau tidak set manual dulu, misal 500000)
         $hargaPerMalam = $reservation->room->price ?? 500000; 
         $roomCharge = $hargaPerMalam * $nights;
 
         return view('reservations.checkout-detail', compact('reservation', 'nights', 'roomCharge', 'hargaPerMalam'));
     }
 
+    // 8. PROSES FINAL CHECK-OUT
     public function processCheckout(Request $request, $id)
     {
         $res = Reservation::with('room')->findOrFail($id);
-        
-        // Hitung Durasi & Biaya
-        $checkIn = Carbon::parse($res->arrival_date);
-        $checkOut = Carbon::parse($res->departure_date);
-        $nights = $checkIn->diffInDays($checkOut);
-        if ($nights <= 0) $nights = 1; // Minimal bayar 1 malam
-
+        $nights = Carbon::parse($res->arrival_date)->diffInDays(Carbon::parse($res->departure_date)) ?: 1;
         $totalAmount = ($res->room->price * $nights) + ($request->additional_charges ?? 0);
 
-        // Simpan Data Checkout
         Checkout::create([
             'reservation_id' => $res->id,
             'additional_charges' => $request->additional_charges ?? 0,
@@ -154,46 +134,48 @@ class ReservationController extends Controller
             'checkout_at' => now(),
         ]);
 
-        // Update Kamar jadi 'vacant dirty' (Kuning/Kotor)
         $res->room->update(['status' => 'vacant dirty']);
-
-        // Update Reservasi Selesai
         $res->update(['status' => 'checked-out']);
 
-        return redirect()->route('reservations.index')
-            ->with('success', 'Check-out berhasil! Kamar perlu dibersihkan.');
+        return redirect()->route('reservations.index')->with('success', 'Check-out berhasil!');
     }
 
-    // 8. FUNGSI PERPANJANG MENGINAP (EXTEND)
+    // 9. EXTEND MASA INAP
     public function extend(Request $request, $id)
     {
         $reservation = Reservation::findOrFail($id);
-        
-        // Tambah hari ke tanggal pulang
         $newDate = Carbon::parse($reservation->departure_date)->addDays($request->days);
-        
         $reservation->update(['departure_date' => $newDate]);
-
-        return redirect()->back()->with('success', 'Masa menginap diperpanjang sampai ' . $newDate->format('d M Y'));
+        return redirect()->back()->with('success', 'Masa menginap diperpanjang.');
     }
 
-    // 9. HALAMAN DAFTAR TAMU (GUEST BOOK)
+// 10. DAFTAR TAMU (Halaman yang lo maksud)
     public function guestIndex()
     {
-        $guests = Reservation::latest()->get();
+        // Tarik semua data dari tabel guests
+        $guests = \App\Models\Guest::latest()->get();
+
+        // HAPUS TANDA KOMENTAR (//) DI BAWAH INI UNTUK DEBUG
+        // dd($guests); 
+
         return view('guests.index', compact('guests'));
     }
 
-    // 10. FITUR INCOGNITO
+    // 11. TOGGLE INCOGNITO
     public function toggleIncognito(Request $request, $id)
     {
-        $reservation = Reservation::findOrFail($id);
-        
-        $reservation->update([
-            'is_incognito' => !$reservation->is_incognito,
-            'incognito_notes' => $request->notes 
+        $guest = Guest::findOrFail($id);
+        $guest->update([
+            'is_incognito' => !$guest->is_incognito
         ]);
 
         return redirect()->back()->with('success', 'Status privasi tamu diperbarui.');
+    }
+
+    // 12. HAPUS TRANSAKSI
+    public function destroyTransaction($id){
+        $transaction = Checkout::findOrFail($id);
+        $transaction->delete();
+        return redirect()->back()->with('success', 'Transaksi berhasil dihapus.');
     }
 }

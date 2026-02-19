@@ -6,6 +6,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <title>Check-in System | Hotel SIG</title>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F9FAFB; }
@@ -14,6 +15,17 @@
         /* Animasi halus untuk button */
         .btn-checkin { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .btn-checkin:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(128, 0, 0, 0.3); }
+        
+        /* TAMBAHAN: Animasi ayun bell */
+        @keyframes swing {
+            0% { transform: rotate(0deg); }
+            10% { transform: rotate(10deg); }
+            30% { transform: rotate(-10deg); }
+            50% { transform: rotate(5deg); }
+            70% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .animate-swing { animation: swing 2s infinite; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -111,12 +123,13 @@
 
                             <td class="px-8 py-7 text-right">
                                 @if($res->reservation_type == 'non-guaranteed')
-                                    <button onclick="openPaymentModal({{ $res->id }}, '{{ $res->guest_name }}')" 
+                                    {{-- MODIFIKASI: Arahkan ke route pembayaran --}}
+                                    <button onclick="redirectToPayment({{ $res->id }}, '{{ $res->guest_name }}')" 
                                         class="btn-checkin bg-blue-600 text-white text-[10px] font-black px-6 py-3.5 rounded-xl shadow-lg shadow-blue-100 uppercase tracking-widest inline-flex items-center gap-2">
                                         <i class="fas fa-hand-holding-usd"></i> Settlement & In
                                     </button>
                                 @else
-                                    <form action="{{ route('reservations.checkin', $res->id) }}" method="POST" class="inline-block">
+                                    <form action="{{ route('reservations.checkin', $res->id) }}" method="POST" class="inline-block" onsubmit="return handleCheckin(this)">
                                         @csrf
                                         <button type="submit" 
                                             class="btn-checkin bg-[#800000] text-white text-[10px] font-black px-6 py-3.5 rounded-xl shadow-lg shadow-red-100 uppercase tracking-widest inline-flex items-center gap-2">
@@ -152,10 +165,32 @@
     </div>
 
     <script>
-        function openPaymentModal(id, name) {
-            // Animasi sederhana sebelum membuka modal (opsional)
-            console.log('Processing payment for:', name);
-            alert('Lanjutkan ke modul pembayaran untuk tamu: ' + name);
+        // FUNGSI BARU: Redirect ke Halaman Pembayaran
+        function redirectToPayment(id, name) {
+            Swal.fire({
+                title: 'Lanjutkan ke Pembayaran?',
+                text: "Tamu " + name + " belum menyelesaikan pembayaran settlement.",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#2563eb',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, Buka Kasir',
+                cancelButtonText: 'Batal',
+                borderRadius: '20px'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // ARAHKAN KE URL PEMBAYARAN (Sesuaikan dengan route lo)
+                    window.location.href = "{{ route('payments.index') }}?reservation_id=" + id;
+                }
+            })
+        }
+
+        // FUNGSI BARU: Loading state pas klik Activate Room
+        function handleCheckin(form) {
+            const btn = form.querySelector('button');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Processing...';
+            return true;
         }
     </script>
 </body>

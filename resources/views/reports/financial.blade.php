@@ -15,15 +15,23 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #800000; border-radius: 10px; }
         @media print {
-            .no-print { display: none; }
-            aside { display: none; }
+            .no-print { display: none !important; }
+            aside { display: none !important; }
             main { margin-left: 0 !important; }
         }
     </style>
 </head>
 
-<body class="bg-[#F8F9FA] text-gray-800 antialiased">
-   <x-header></x-header>
+{{-- TAMBAHAN: x-data untuk kontrol checkbox --}}
+<body class="bg-[#F8F9FA] text-gray-800 antialiased" 
+      x-data="{ 
+        selected: [], 
+        allIds: {{ $transactions->pluck('id') }},
+        toggleAll() {
+            this.selected = (this.selected.length === this.allIds.length) ? [] : [...this.allIds];
+        }
+      }">
+    <x-header></x-header>
     <div class="flex min-h-screen">
         <aside class="w-64 fixed inset-y-0 left-0 z-50 shadow-2xl bg-white border-r border-gray-100 no-print">
             <x-sidebar></x-sidebar>
@@ -43,6 +51,20 @@
                     </div>
                     
                     <div class="flex items-center gap-3 no-print">
+                        {{-- BUTTON HAPUS TERPILIH (Muncul jika ada yang dicentang) --}}
+                        <div x-show="selected.length > 0" x-cloak x-transition class="flex items-center">
+                            <form action="{{ route('transactions.bulkDelete') }}" method="POST" 
+                                  onsubmit="return confirm('Hapus ' + selected.length + ' transaksi yang dipilih?')">
+                                @csrf
+                                @method('DELETE')
+                                <input type="hidden" name="ids" :value="selected.join(',')">
+                                <button type="submit" class="flex items-center gap-2 bg-red-600 text-white px-6 py-2.5 rounded-2xl font-bold text-xs hover:bg-red-700 transition-all shadow-lg shadow-red-900/20 active:scale-95 mr-2">
+                                    <i class="fas fa-trash-alt"></i> Hapus Terpilih (<span x-text="selected.length"></span>)
+                                </button>
+                            </form>
+                            <div class="w-px h-8 bg-gray-200 mx-2"></div>
+                        </div>
+
                         <button onclick="window.print()" class="group flex items-center gap-2 bg-white border border-gray-200 text-gray-600 px-5 py-2.5 rounded-2xl font-bold text-xs hover:bg-gray-50 hover:border-[#800000] hover:text-[#800000] transition-all shadow-sm">
                             <i class="fas fa-print group-hover:scale-110 transition-transform"></i> Cetak Laporan
                         </button>
@@ -66,7 +88,6 @@
                     @foreach($cards as $card)
                     <div class="group bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                         <div class="flex items-center justify-between mb-4">
-                            {{-- Gunakan style manual jika tailwind mem-purge class dinamis --}}
                             <div class="w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform
                                 {{ $card[3] == 'green' ? 'bg-green-50 text-green-600' : '' }}
                                 {{ $card[3] == 'blue' ? 'bg-blue-50 text-blue-600' : '' }}
@@ -106,16 +127,28 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                    {{-- HEADER CHECKBOX MASTER --}}
+                                    <th class="px-8 py-5 no-print">
+                                        <input type="checkbox" @click="toggleAll()" :checked="selected.length === allIds.length && allIds.length > 0"
+                                               class="w-4 h-4 rounded border-gray-300 text-[#800000] focus:ring-[#800000] cursor-pointer">
+                                    </th>
                                     <th class="px-8 py-5">Tanggal C/O</th>
                                     <th class="px-8 py-5">Detail Tamu</th>
                                     <th class="px-8 py-5">Tarif Kamar</th>
                                     <th class="px-8 py-5">Biaya Tambahan</th>
                                     <th class="px-8 py-5 text-center">Total Dibayar</th>
+                                    <th class="px-8 py-5 text-center no-print">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
                                 @forelse($transactions as $trx)
-                                    <tr class="hover:bg-red-50/30 transition-colors group">
+                                    <tr class="transition-colors group" :class="selected.includes({{ $trx->id }}) ? 'bg-red-50/50' : 'hover:bg-red-50/30'">
+                                        {{-- CHECKBOX PER BARIS --}}
+                                        <td class="px-8 py-5 no-print">
+                                            <input type="checkbox" value="{{ $trx->id }}" x-model.number="selected"
+                                                   class="w-4 h-4 rounded border-gray-300 text-[#800000] focus:ring-[#800000] cursor-pointer">
+                                        </td>
+
                                         {{-- Tanggal --}}
                                         <td class="px-8 py-5">
                                             <div class="text-xs font-bold text-gray-800">{{ \Carbon\Carbon::parse($trx->checkout_at)->format('d M Y') }}</div>
@@ -155,10 +188,22 @@
                                                 Rp {{ number_format($trx->total_amount, 0, ',', '.') }}
                                             </span>
                                         </td>
+
+                                        {{-- AKSI DELETE TUNGGAL --}}
+                                        <td class="px-8 py-5 text-center no-print">
+                                            <form action="{{ route('transactions.destroy', $trx->id) }}" method="POST" 
+                                                  onsubmit="return confirm('Hapus transaksi ini?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="w-9 h-9 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all duration-300 flex items-center justify-center mx-auto shadow-sm group-hover:scale-110">
+                                                    <i class="fas fa-trash-alt text-[10px]"></i>
+                                                </button>
+                                            </form>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="px-8 py-10 text-center text-gray-400">
+                                        <td colspan="7" class="px-8 py-10 text-center text-gray-400">
                                             <i class="fas fa-file-invoice-dollar text-4xl mb-3 opacity-30"></i>
                                             <p class="text-sm font-medium">Belum ada data transaksi keuangan.</p>
                                         </td>
@@ -169,15 +214,13 @@
                     </div>
 
                     {{-- PAGINATION --}}
-                    @if($transactions->hasPages())
                     <div class="p-8 bg-gray-50/30 border-t border-gray-50 no-print">
-                        {{ $transactions->links() }}
+                        @if($transactions instanceof \Illuminate\Pagination\LengthAwarePaginator && $transactions->hasPages())
+                            {{ $transactions->links() }}
+                        @else
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Menampilkan {{ $transactions->count() }} data transaksi</p>
+                        @endif
                     </div>
-                    @else
-                    <div class="p-6 bg-gray-50/30 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-gray-50 no-print">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Menampilkan semua data transaksi</p>
-                    </div>
-                    @endif
                 </div>
 
                 <footer class="mt-16 text-center border-t border-gray-100 pt-8 no-print">

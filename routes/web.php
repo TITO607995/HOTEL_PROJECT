@@ -6,6 +6,8 @@ use App\Http\Controllers\RoomController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Room;
 
@@ -67,8 +69,8 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // --- RESERVASI & TAMU ---
-    Route::get('/guests', [ReservationController::class, 'guestIndex'])->name('guests.index');
-    Route::post('/guests/incognito/{id}', [ReservationController::class, 'toggleIncognito'])->name('guests.toggle-incognito');
+   Route::get('/guests', [ReservationController::class, 'guestIndex'])->name('guests.index');
+Route::post('/guests/toggle-incognito/{id}', [ReservationController::class, 'toggleIncognito'])->name('guests.toggle-incognito');
 
     Route::prefix('reservasi')->group(function () {
         Route::get('/', [ReservationController::class, 'index'])->name('reservations.index');
@@ -92,6 +94,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/reports/operasional', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/keuangan', [ReportController::class, 'financial'])->name('reports.financial'); 
+    Route::delete('/financial-reports/{id}', [ReservationController::class, 'destroyTransaction'])->name('transactions.destroy');
     Route::prefix('employees')->group(function () {
         Route::get('/create', [EmployeeController::class, 'create'])->name('employees.create');
         Route::post('/store', [EmployeeController::class, 'store'])->name('employees.store');
@@ -102,6 +105,13 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::delete('/transactions/bulk-delete', [TransactionController::class, 'bulkDelete'])
+    ->name('transactions.bulkDelete');
+
+    Route::get('/pembayaran', [PaymentController::class, 'index'])->name('payments.index');
+
+// Tambahkan juga untuk simpan pembayarannya nanti
+Route::post('/pembayaran/store', [PaymentController::class, 'store'])->name('payments.store');
 });
 
 require __DIR__.'/auth.php';
