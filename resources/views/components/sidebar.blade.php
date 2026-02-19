@@ -87,30 +87,75 @@
                  <span>Status OO/OS</span>
             </a>
             
-            {{-- 6. MANAJEMEN KARYAWAN (Link ke Index, bukan Create) --}}
-            <a href="{{ route('employees.index') }}" 
-               class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 
-               {{ request()->routeIs('employees.*') ? 'bg-white/20 font-bold shadow-inner text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
-                 <span class="text-lg w-6 text-center">👔</span> 
-                 <span>Karyawan</span>
-            </a>
+            <div x-data="{ open: {{ request()->routeIs('employees.*') || request()->routeIs('roles.*') ? 'true' : 'false' }} }">
+                <button type="button" 
+                    @click="open = !open" 
+                    class="w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 group 
+                    {{ request()->routeIs('employees.*') || request()->routeIs('roles.*') ? 'bg-white/20 font-bold text-white shadow-inner' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+                    
+                    <div class="flex items-center space-x-3">
+                        <span class="text-lg w-6 text-center">👥</span> 
+                        <span>Users</span>
+                    </div>
+                    
+                    <i class="fas fa-chevron-down text-[10px] transition-transform duration-300 opacity-70 group-hover:opacity-100" :class="open ? 'rotate-180' : ''"></i>
+                </button>
 
-            {{-- 7. ROLE & AKSES (Baru Ditambahkan) --}}
-            <a href="{{ route('roles.index') }}" 
-               class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 
-               {{ request()->routeIs('roles.*') ? 'bg-white/20 font-bold shadow-inner text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
-                 <span class="text-lg w-6 text-center">🔐</span> 
-                 <span>Role & Akses</span>
-            </a>
+                <div x-show="open" 
+                    x-cloak
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 -translate-y-2"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    class="mt-1 ml-4 space-y-1 border-l-2 border-white/10 pl-3">
+                    
+                    <a href="{{ route('employees.index') }}" 
+                    class="block p-2 rounded-lg text-sm transition-colors flex items-center gap-2 {{ request()->routeIs('employees.*') ? 'text-white font-bold bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/5' }}">
+                    <span class="text-xs">👔</span> Karyawan
+                    </a>
+                    
+                    <a href="{{ route('roles.index') }}" 
+                    class="block p-2 rounded-lg text-sm transition-colors flex items-center gap-2 {{ request()->routeIs('roles.*') ? 'text-white font-bold bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/5' }}">
+                    <span class="text-xs">🔐</span> Role & Akses
+                    </a>
+                    
+                </div>
+            </div>
 
-             {{-- 8. LAPORAN --}}
-             {{-- Pastikan route 'reports.index' ada, kalau belum ada bisa dikasih '#' dulu --}}
-             <a href="{{ Route::has('reports.index') ? route('reports.index') : '#' }}" 
-                class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 
-                {{ request()->routeIs('reports.*') ? 'bg-white/20 font-bold shadow-inner text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
-                 <span class="text-lg w-6 text-center">📈</span> 
-                 <span>Laporan</span>
-            </a>
+            <div x-data="{ open: {{ request()->routeIs('reports.*') ? 'true' : 'false' }} }">
+                <button type="button" 
+                    @click="open = !open" 
+                    class="w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 group 
+                    {{ request()->routeIs('reports.*') ? 'bg-white/20 font-bold text-white shadow-inner' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+                    
+                    <div class="flex items-center space-x-3">
+                        <span class="text-lg w-6 text-center">📈</span> 
+                        <span>Laporan</span>
+                    </div>
+                    
+                    <i class="fas fa-chevron-down text-[10px] transition-transform duration-300 opacity-70 group-hover:opacity-100" :class="open ? 'rotate-180' : ''"></i>
+                </button>
+
+                <div x-show="open" 
+                    x-cloak
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 -translate-y-2"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    class="mt-1 ml-4 space-y-1 border-l-2 border-white/10 pl-3">
+                    
+                    {{-- Sub-menu Operasional --}}
+                    <a href="{{ route('reports.index') }}" 
+                    class="block p-2 rounded-lg text-sm transition-colors flex items-center gap-2 {{ request()->routeIs('reports.index') ? 'text-white font-bold bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/5' }}">
+                    <span class="text-xs">📊</span> Operasional
+                    </a>
+                    
+                    {{-- Sub-menu Keuangan --}}
+                    <a href="{{ route('reports.financial') }}" 
+                    class="block p-2 rounded-lg text-sm transition-colors flex items-center gap-2 {{ request()->routeIs('reports.financial') ? 'text-white font-bold bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/5' }}">
+                    <span class="text-xs">💰</span> Keuangan
+                    </a>
+                    
+                </div>
+            </div>
         </div>
         @endif
 

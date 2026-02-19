@@ -116,7 +116,23 @@ class ReservationController extends Controller
         return view('reservations.checkout', compact('reservations'));
     }
 
-    // 7. PROSES CHECK-OUT
+    public function checkout($id)
+    {
+        $reservation = Reservation::with('room')->findOrFail($id);
+        
+        // Hitung estimasi biaya kamar
+        $checkIn = Carbon::parse($reservation->arrival_date);
+        $checkOut = Carbon::parse($reservation->departure_date);
+        $nights = $checkIn->diffInDays($checkOut);
+        if ($nights <= 0) $nights = 1; 
+
+        // Ambil harga kamar (pastikan tabel rooms punya kolom price, kalau tidak set manual dulu, misal 500000)
+        $hargaPerMalam = $reservation->room->price ?? 500000; 
+        $roomCharge = $hargaPerMalam * $nights;
+
+        return view('reservations.checkout-detail', compact('reservation', 'nights', 'roomCharge', 'hargaPerMalam'));
+    }
+
     public function processCheckout(Request $request, $id)
     {
         $res = Reservation::with('room')->findOrFail($id);

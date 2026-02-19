@@ -2,33 +2,44 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room; // Pastikan model Room di-import
-use App\Models\User; // Untuk hitung staff
+use App\Models\Room;
+use App\Models\User;
+use App\Models\Checkout;
 use Illuminate\Http\Request;
 
 class ReportController extends Controller
 {
+    // 1. LAPORAN OPERASIONAL (YANG LAMA)
     public function index()
     {
-        // Hitung data langsung dari database
         $availableCount = Room::where('status', 'available')->count();
         $ooCount        = Room::where('status', 'oo')->count();
-        $staffCount     = User::count(); // Asumsi staff ada di tabel users
+        $staffCount     = User::count(); 
         
-        // Hitung Persentase Occupancy (contoh sederhana)
         $totalRooms = Room::count();
         $occupied   = Room::where('status', 'occupied')->count();
         $occupancyRate = $totalRooms > 0 ? round(($occupied / $totalRooms) * 100) : 0;
 
-        // Ambil 10 aktivitas terbaru (opsional, bisa dari tabel log jika ada)
         $recentRooms = Room::orderBy('updated_at', 'desc')->take(10)->get();
 
         return view('reports.index', compact(
-            'availableCount', 
-            'ooCount', 
-            'staffCount', 
-            'occupancyRate',
-            'recentRooms'
+            'availableCount', 'ooCount', 'staffCount', 'occupancyRate', 'recentRooms'
+        ));
+    }
+
+    // 2. LAPORAN KEUANGAN (YANG BARU)
+    public function financial()
+    {
+        $transactions = Checkout::with(['reservation.room'])->latest()->paginate(10);
+
+        $totalPendapatan = Checkout::sum('total_amount');
+        $pendapatanTambahan = Checkout::sum('additional_charges');
+        $pendapatanKamar = $totalPendapatan - $pendapatanTambahan;
+        $totalTransaksi = Checkout::count();
+
+        // Kita arahkan ke view yang berbeda: reports.financial
+        return view('reports.financial', compact(
+            'transactions', 'totalPendapatan', 'pendapatanTambahan', 'pendapatanKamar', 'totalTransaksi'
         ));
     }
 }

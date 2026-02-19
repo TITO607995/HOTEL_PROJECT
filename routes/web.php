@@ -82,18 +82,16 @@ Route::middleware(['auth'])->group(function () {
         
         // Check-out
         Route::get('/check-out', [ReservationController::class, 'checkoutPage'])->name('reservations.checkout.page');
-        Route::post('/check-out/{id}', [ReservationController::class, 'processCheckout'])->name('reservations.checkout.process');
+        Route::get('/check-out/{id}', [App\Http\Controllers\ReservationController::class, 'checkout'])->name('reservations.checkout');
+        Route::post('/check-out/{id}/process', [App\Http\Controllers\ReservationController::class, 'processCheckout'])->name('reservations.process-checkout');
     });
 
     Route::resource('employees', EmployeeController::class);
 
-    // 2. Route Role (Otomatis bikin roles.index, create, etc)
     Route::resource('roles', RoleController::class);
 
-    // --- LAPORAN & KARYAWAN (KHUSUS ADMIN) ---
-    // Kamu bisa menambahkan middleware 'can:admin' jika sudah mengatur Policy/Gate
-    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-    
+    Route::get('/reports/operasional', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/keuangan', [ReportController::class, 'financial'])->name('reports.financial'); 
     Route::prefix('employees')->group(function () {
         Route::get('/create', [EmployeeController::class, 'create'])->name('employees.create');
         Route::post('/store', [EmployeeController::class, 'store'])->name('employees.store');

@@ -41,7 +41,7 @@
                     <h1 class="text-2xl font-extrabold text-gray-800 tracking-tight">Proses Check-out</h1>
                     <p class="text-sm text-gray-500 font-medium">Lengkapi rincian biaya sebelum konfirmasi pembayaran.</p>
                 </div>
-                <a href="{{ route('reservations.index') }}" class="flex items-center text-gray-400 hover:text-[#800000] transition font-bold text-sm">
+                <a href="{{ route('reservations.checkout.page') }}" class="flex items-center text-gray-400 hover:text-[#800000] transition font-bold text-sm">
                     <i class="fas fa-arrow-left mr-2"></i> KEMBALI
                 </a>
             </div>
@@ -53,6 +53,7 @@
                         <div>
                             <h2 class="text-5xl font-black text-gray-900 tracking-tighter italic uppercase leading-none">Invoice</h2>
                             <p class="text-[10px] text-gray-400 font-bold tracking-[0.3em] uppercase mt-2">Sistem Informasi Hotel SIG</p>
+                            <p class="text-sm font-bold text-gray-500 mt-4">INV-{{ date('Ymd') }}-{{ $reservation->id }}</p>
                         </div>
                         <div class="text-right">
                             <p class="font-black text-gray-800 text-lg uppercase">Website Simulasi PH</p>
@@ -61,46 +62,33 @@
                         </div>
                     </div>
 
-                    <form action="" id="checkoutForm" method="POST">
+                    {{-- Form mengarah langsung ke proses berdasarkan ID Reservasi --}}
+                    <form action="{{ route('reservations.process-checkout', $reservation->id) }}" id="checkoutForm" method="POST">
                         @csrf
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
                             <div class="space-y-6">
-                                <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 shadow-sm no-print">
-                                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Cari Reservasi Aktif</label>
-                                    <select id="resSelect" class="w-full bg-transparent border-none focus:ring-0 font-black text-lg text-[#800000] cursor-pointer" required>
-                                        <option value="">-- PILIH TAMU / KAMAR --</option>
-                                        @foreach($reservations as $r)
-                                            <option value="{{ $r->id }}" 
-                                                    data-room="{{ $r->room->room_number }}" 
-                                                    data-type="{{ $r->room->type }}"
-                                                    data-price="{{ $r->room->price }}"
-                                                    data-in="{{ $r->arrival_date }}" 
-                                                    data-out="{{ $r->departure_date }}"
-                                                    data-name="{{ $r->guest_name }}">
-                                                {{ $r->room->room_number }} - {{ $r->guest_name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="hidden print:block border-dotted-b pb-2">
-                                    <p class="text-[10px] font-bold text-gray-400 uppercase">Nama Tamu</p>
-                                    <p id="printGuestName" class="font-bold text-xl">-</p>
+                                {{-- Menampilkan Data Tamu Secara Fix (Tanpa Dropdown) --}}
+                                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm">
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Ditagihkan Kepada</label>
+                                    <p class="font-black text-2xl text-[#800000] uppercase">{{ $reservation->guest_name }}</p>
+                                    <p class="text-sm text-gray-600 font-medium mt-1"><i class="fas fa-envelope mr-1 text-gray-400"></i> {{ $reservation->email }}</p>
+                                    <p class="text-sm text-gray-600 font-medium"><i class="fas fa-phone mr-1 text-gray-400"></i> {{ $reservation->phone }}</p>
                                 </div>
                             </div>
 
                             <div class="space-y-4 px-2">
                                 <div class="flex justify-between border-dotted-b pb-2">
                                     <span class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Nomor Kamar</span>
-                                    <span id="displayRoom" class="font-black text-gray-800">-</span>
+                                    <span class="font-black text-gray-800">{{ $reservation->room->room_number }} ({{ $reservation->room->type }})</span>
                                 </div>
                                 <div class="flex justify-between border-dotted-b pb-2">
                                     <span class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Check-in</span>
-                                    <span id="displayIn" class="font-bold text-gray-800">-</span>
+                                    <span class="font-bold text-gray-800">{{ \Carbon\Carbon::parse($reservation->arrival_date)->format('d F Y') }}</span>
                                 </div>
                                 <div class="flex justify-between border-dotted-b pb-2">
                                     <span class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Check-out</span>
-                                    <span id="displayOut" class="font-bold text-gray-800">-</span>
+                                    <span class="font-bold text-gray-800">{{ \Carbon\Carbon::parse($reservation->departure_date)->format('d F Y') }}</span>
                                 </div>
                             </div>
                         </div>
@@ -117,27 +105,32 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
+                                    {{-- Baris 1: Harga Sewa Kamar (Otomatis dari DB) --}}
                                     <tr class="bg-gray-50/50">
                                         <td class="p-6 text-center font-bold text-gray-400">01</td>
                                         <td class="p-6">
-                                            <p class="font-bold text-gray-800" id="detailRoomType">Sewa Kamar</p>
-                                            <p class="text-[10px] text-gray-400 uppercase italic" id="detailStayPeriod">Menunggu pilihan...</p>
+                                            <p class="font-bold text-gray-800">Sewa Kamar ({{ $reservation->room->type }})</p>
+                                            <p class="text-[10px] text-gray-400 uppercase italic">{{ \Carbon\Carbon::parse($reservation->arrival_date)->format('d/m/Y') }} s/d {{ \Carbon\Carbon::parse($reservation->departure_date)->format('d/m/Y') }}</p>
                                         </td>
-                                        <td class="p-6 text-center font-bold text-gray-800" id="displayNights">0</td>
-                                        <td class="p-6 text-right font-bold text-gray-800" id="displayPricePerNight">0</td>
-                                        <td class="p-6 text-right font-black text-gray-900" id="displayRoomSubtotal">0</td>
+                                        <td class="p-6 text-center font-bold text-gray-800">{{ $nights }} Malam</td>
+                                        <td class="p-6 text-right font-bold text-gray-800">{{ number_format($hargaPerMalam, 0, ',', '.') }}</td>
+                                        <td class="p-6 text-right font-black text-gray-900">{{ number_format($roomCharge, 0, ',', '.') }}</td>
                                     </tr>
+                                    
+                                    {{-- Baris 2: Input Biaya Tambahan --}}
                                     <tr class="hover:bg-gray-50 transition">
                                         <td class="p-6 text-center font-bold text-gray-400">02</td>
                                         <td class="p-6">
                                             <input type="text" name="notes" placeholder="Catatan: Minibar, Laundry, atau Kerusakan..." 
-                                                   class="w-full bg-transparent border-none focus:ring-0 italic text-gray-600 placeholder:text-gray-300 p-0">
+                                                   class="w-full bg-transparent border-none focus:ring-0 italic text-gray-600 placeholder:text-gray-300 p-0 no-print">
+                                            <span class="hidden print:block text-gray-600 italic">Biaya Tambahan / Denda</span>
                                         </td>
                                         <td class="p-6 text-center text-gray-400">-</td>
                                         <td class="p-6 text-right text-gray-400 uppercase text-[10px] font-bold">Add Charge</td>
                                         <td class="p-6">
-                                            <input type="number" name="additional_charges" id="addCharge" value="0" 
-                                                   class="w-full bg-transparent border-none focus:ring-0 text-right font-black text-[#800000] text-xl p-0">
+                                            <input type="number" name="additional_charges" id="addCharge" value="0" min="0"
+                                                   class="w-full bg-transparent border-none focus:ring-0 text-right font-black text-[#800000] text-xl p-0 no-print">
+                                            <span class="hidden print:block text-right font-black text-[#800000] text-xl">0</span>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -145,7 +138,7 @@
                                     <tr class="bg-gray-900">
                                         <td colspan="4" class="p-6 text-right font-bold text-white uppercase tracking-widest text-xs">Total Pembayaran Akhir</td>
                                         <td class="p-6 text-right font-black text-white text-3xl">
-                                            <span class="text-sm mr-1">Rp</span><span id="grandTotalDisplay">0</span>
+                                            <span class="text-sm mr-1">Rp</span><span id="grandTotalDisplay">{{ number_format($roomCharge, 0, ',', '.') }}</span>
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -165,8 +158,8 @@
                                     <span>CETAK</span>
                                 </button>
 
-                                <button type="submit" id="submitBtn" disabled 
-                                        class="bg-[#800000] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-black px-12 py-5 rounded-2xl shadow-xl hover:shadow-red-900/40 hover:-translate-y-1 transition-all duration-300 flex items-center gap-3">
+                                <button type="submit" id="submitBtn" 
+                                        class="bg-[#800000] text-white font-black px-12 py-5 rounded-2xl shadow-xl hover:shadow-red-900/40 hover:-translate-y-1 transition-all duration-300 flex items-center gap-3">
                                     <span>KONFIRMASI CHECK-OUT</span>
                                     <i class="fas fa-check-circle"></i>
                                 </button>
@@ -182,70 +175,24 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        const resSelect = document.getElementById('resSelect');
+        // Data dasar subtotal didapatkan langsung dari backend PHP
+        const baseRoomTotal = {{ $roomCharge }};
         const addChargeInput = document.getElementById('addCharge');
         const grandTotalDisplay = document.getElementById('grandTotalDisplay');
-        const submitBtn = document.getElementById('submitBtn');
 
+        // Fungsi format Rupiah
         function formatNumber(num) {
             return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')
         }
 
-        resSelect.addEventListener('change', function() {
-            const opt = this.options[this.selectedIndex];
-            
-            if (!this.value) {
-                resetTampilan();
-                return;
-            }
-
-            // Hitung Selisih Hari
-            const dateIn = new Date(opt.dataset.in);
-            const dateOut = new Date(opt.dataset.out);
-            const price = parseInt(opt.dataset.price) || 0;
-            
-            const diffTime = Math.abs(dateOut - dateIn);
-            const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
-            const roomSubtotal = nights * price;
-
-            // Update UI Atas
-            document.getElementById('displayRoom').innerText = opt.dataset.room;
-            document.getElementById('displayIn').innerText = opt.dataset.in;
-            document.getElementById('displayOut').innerText = opt.dataset.out;
-            document.getElementById('printGuestName').innerText = opt.dataset.name;
-
-            // Update Tabel
-            document.getElementById('detailRoomType').innerText = "Sewa Kamar (" + opt.dataset.type + ")";
-            document.getElementById('detailStayPeriod').innerText = opt.dataset.in + " s/d " + opt.dataset.out;
-            document.getElementById('displayNights').innerText = nights + " Malam";
-            document.getElementById('displayPricePerNight').innerText = formatNumber(price);
-            document.getElementById('displayRoomSubtotal').innerText = formatNumber(roomSubtotal);
-
-            window.currentRoomSubtotal = roomSubtotal;
-            calculateGrandTotal();
-
-            document.getElementById('checkoutForm').action = "/reservasi/check-out/" + this.value + "/process";
-            submitBtn.disabled = false;
+        // Hitung Grand Total otomatis pas resepsionis ngetik biaya tambahan
+        addChargeInput.addEventListener('input', function() {
+            const additional = parseInt(this.value) || 0;
+            const totalSemua = baseRoomTotal + additional;
+            grandTotalDisplay.innerText = formatNumber(totalSemua);
         });
 
-        addChargeInput.addEventListener('input', calculateGrandTotal);
-
-        function calculateGrandTotal() {
-            const additional = parseInt(addChargeInput.value) || 0;
-            const roomTotal = window.currentRoomSubtotal || 0;
-            const totalSemua = roomTotal + additional;
-            grandTotalDisplay.innerText = formatNumber(totalSemua);
-        }
-
-        function resetTampilan() {
-            submitBtn.disabled = true;
-            grandTotalDisplay.innerText = "0";
-            document.getElementById('displayRoom').innerText = "-";
-            document.getElementById('displayNights').innerText = "0";
-            document.getElementById('displayRoomSubtotal').innerText = "0";
-        }
-
-        // Alert Konfirmasi sebelum Submit
+        // Konfirmasi sebelum submit data ke laporan keuangan
         document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             e.preventDefault();
             Swal.fire({
@@ -254,6 +201,7 @@
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#800000',
+                cancelButtonColor: '#9ca3af',
                 confirmButtonText: 'Ya, Selesaikan!',
                 cancelButtonText: 'Batal'
             }).then((result) => {
