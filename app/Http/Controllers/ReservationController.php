@@ -141,12 +141,28 @@ class ReservationController extends Controller
     }
 
     // 9. EXTEND MASA INAP
+    // FUNGSI PERPANJANG MENGINAP (EXTEND)
+    // FUNGSI UBAH TANGGAL CHECK-OUT (EXTEND/REDUCE)
     public function extend(Request $request, $id)
     {
+        $request->validate([
+            'new_departure_date' => 'required|date',
+        ]);
+
         $reservation = Reservation::findOrFail($id);
-        $newDate = Carbon::parse($reservation->departure_date)->addDays($request->days);
+        
+        $newDate = \Carbon\Carbon::parse($request->new_departure_date);
+        $arrivalDate = \Carbon\Carbon::parse($reservation->arrival_date);
+
+        // Validasi: Pastikan tanggal kepulangan minimal 1 hari setelah Check-in
+        if ($newDate->lte($arrivalDate)) {
+            return redirect()->back()->with('error', 'Gagal! Tanggal Check-out tidak boleh mundur melebih tanggal Check-in (' . $arrivalDate->format('d M Y') . ').');
+        }
+
+        // Update ke tanggal kepulangan yang baru (Bisa maju, bisa mundur)
         $reservation->update(['departure_date' => $newDate]);
-        return redirect()->back()->with('success', 'Masa menginap diperpanjang.');
+
+        return redirect()->back()->with('success', 'Tanggal Check-out berhasil diubah menjadi ' . $newDate->format('d M Y') . '. Tagihan akan menyesuaikan otomatis!');
     }
 
 // 10. DAFTAR TAMU (Halaman yang lo maksud)

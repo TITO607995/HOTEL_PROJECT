@@ -70,8 +70,17 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // --- RESERVASI & TAMU ---
-   Route::get('/guests', [ReservationController::class, 'guestIndex'])->name('guests.index');
-Route::post('/guests/toggle-incognito/{id}', [ReservationController::class, 'toggleIncognito'])->name('guests.toggle-incognito');
+   // --- MANAJEMEN TAMU (GUESTS) ---
+    Route::prefix('guests')->group(function () {
+        Route::get('/', [ReservationController::class, 'guestIndex'])->name('guests.index');
+        
+        // Letakkan rute bulk-delete DI ATAS rute {id} agar tidak bentrok
+        Route::delete('/bulk-delete', [ReservationController::class, 'bulkDelete'])->name('guests.bulk-delete'); 
+        
+        Route::post('/incognito/{id}', [ReservationController::class, 'toggleIncognito'])->name('guests.toggle-incognito');
+        Route::put('/{id}', [ReservationController::class, 'updateGuest'])->name('guests.update');
+        Route::delete('/{id}', [ReservationController::class, 'destroyGuest'])->name('guests.destroy');
+    });
 
     Route::prefix('reservasi')->group(function () {
         Route::get('/', [ReservationController::class, 'index'])->name('reservations.index');

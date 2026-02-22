@@ -14,6 +14,7 @@ class Guest extends Model
         'guest_name',
         'email',
         'is_incognito',
+        'phone',
         'status' // WAJIB TAMBAHKAN INI
     ];
 

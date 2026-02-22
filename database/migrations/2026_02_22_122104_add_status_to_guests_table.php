@@ -9,21 +9,22 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-public function up(): void
+    public function up(): void
     {
-        // Mengecek apakah kolom 'order' belum ada di tabel 'menus'
-        if (!Schema::hasColumn('menus', 'order')) {
-            Schema::table('menus', function (Blueprint $table) {
-                $table->integer('order')->default(0)->after('name');
+        // Cek dulu, kalau kolom 'status' BELUM ADA, baru ditambahkan
+        if (!Schema::hasColumn('guests', 'status')) {
+            Schema::table('guests', function (Blueprint $table) {
+                $table->string('status')->default('active')->after('is_incognito');
             });
         }
     }
+
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::table('menus', function (Blueprint $table) {
+        Schema::table('guests', function (Blueprint $table) {
             //
         });
     }
