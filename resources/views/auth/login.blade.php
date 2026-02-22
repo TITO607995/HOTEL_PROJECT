@@ -6,6 +6,7 @@
     <title>Login - Perhotelan SMKSIG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
@@ -19,7 +20,6 @@
             background: linear-gradient(135deg, #8B0000 0%, #4A0000 100%);
         }
 
-        /* Border radius custom untuk lekukan yang lebih nyeni */
         .modern-curve {
             border-bottom-right-radius: 180px;
             border-top-right-radius: 40px;
@@ -36,9 +36,12 @@
         }
 
         .animate-fade { animation: fadeIn 0.5s ease-out forwards; }
+        
+        /* Gaya tambahan untuk spinner agar mulus */
+        [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="antialiased overflow-hidden">
+<body class="antialiased overflow-hidden" x-data="{ isLoading: false }">
 
     <div class="flex min-h-screen">
         
@@ -85,7 +88,7 @@
 
                 <x-auth-session-status class="mb-4" :status="session('status')" />
 
-                <form method="POST" action="{{ route('login') }}" class="space-y-6">
+                <form method="POST" action="{{ route('login') }}" class="space-y-6" @submit="isLoading = true">
                     @csrf
 
                     <div class="space-y-2">
@@ -126,8 +129,15 @@
                     </div>
 
                     <button type="submit" 
-                        class="w-full py-4 bg-[#1A1A1A] text-white rounded-2xl font-bold text-sm hover:bg-black hover:shadow-2xl hover:-translate-y-1 active:scale-95 transition-all duration-300">
-                        Masuk ke Dashboard
+                        :disabled="isLoading"
+                        class="w-full py-4 bg-[#1A1A1A] text-white rounded-2xl font-bold text-sm hover:bg-black hover:shadow-2xl hover:-translate-y-1 active:scale-95 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed">
+                        
+                        <svg x-show="isLoading" x-cloak class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+
+                        <span x-text="isLoading ? 'Sedang Memproses...' : 'Masuk ke Dashboard'"></span>
                     </button>
                 </form>
 
@@ -150,13 +160,13 @@
                 icon.classList.replace('fa-eye-slash', 'fa-eye');
             }
         }
-        // Cek apakah ada error dari Laravel
+
     @if ($errors->any())
         Swal.fire({
             icon: 'error',
             title: 'Login Gagal!',
-            text: '{{ $errors->first() }}', // Mengambil pesan error pertama (misal: "These credentials do not match our records.")
-            confirmButtonColor: '#8B0000', // Warna Maroon senada dengan tema kamu
+            text: '{{ $errors->first() }}',
+            confirmButtonColor: '#8B0000',
             background: '#ffffff',
             customClass: {
                 title: 'text-2xl font-black text-gray-900',
@@ -165,7 +175,6 @@
         });
     @endif
 
-    // Cek jika ada session status (misal setelah reset password)
     @if (session('status'))
         Swal.fire({
             icon: 'success',

@@ -8,6 +8,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\GuestController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Room;
 
@@ -86,6 +87,7 @@ Route::post('/guests/toggle-incognito/{id}', [ReservationController::class, 'tog
         Route::get('/check-out', [ReservationController::class, 'checkoutPage'])->name('reservations.checkout.page');
         Route::get('/check-out/{id}', [App\Http\Controllers\ReservationController::class, 'checkout'])->name('reservations.checkout');
         Route::post('/check-out/{id}/process', [App\Http\Controllers\ReservationController::class, 'processCheckout'])->name('reservations.process-checkout');
+        Route::post('/reservasi/check-out/{id}/process', [GuestController::class, 'processCheckout'])->name('reservasi.processCheckout');
     });
 
     Route::resource('employees', EmployeeController::class);
@@ -112,6 +114,9 @@ Route::post('/guests/toggle-incognito/{id}', [ReservationController::class, 'tog
 
 // Tambahkan juga untuk simpan pembayarannya nanti
 Route::post('/pembayaran/store', [PaymentController::class, 'store'])->name('payments.store');
+Route::delete('/guests/bulk-delete', [GuestController::class, 'bulkDelete'])->name('guests.bulk-delete');
+
+Route::post('/rooms/store', [RoomController::class, 'store'])->name('rooms.store');
 });
 
 require __DIR__.'/auth.php';

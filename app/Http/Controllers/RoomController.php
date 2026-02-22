@@ -4,22 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Models\Room;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage; // Tambahkan ini untuk manajemen file
 
 class RoomController extends Controller
 {
-    // 1. HALAMAN DAFTAR KAMAR (KATALOG UNTUK TAMU/RESEPSIONIS)
+    // 1. HALAMAN DAFTAR KAMAR (KATALOG)
     public function index(Request $request)
     {
         $query = Room::query();
 
         // Fitur Pencarian berdasarkan Nomor Kamar
-        if ($request->room_number) {
+        if ($request->filled('room_number')) {
             $query->where('room_number', 'like', '%' . $request->room_number . '%');
         }
 
-        $rooms = $query->get();
+        $rooms = $query->orderBy('room_number', 'asc')->get();
 
-        // Simulasi Foto (Placeholder agar tampilan cantik)
+        // Simulasi Foto (Placeholder)
         $simulasiFoto = [
             'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=500',
             'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=500',
@@ -28,10 +29,11 @@ class RoomController extends Controller
         ];
 
         foreach ($rooms as $key => $room) {
-            // Jika ada foto di database pakai itu, jika tidak pakai foto simulasi
-            if ($room->image) {
-                $room->foto_display = asset('storage/rooms/' . $room->image);
+            // Logika Foto: Cek kolom 'image' (sesuaikan dengan nama kolom di migrasi kamu)
+            if ($room->image && Storage::disk('public')->exists($room->image)) {
+                $room->foto_display = asset('storage/' . $room->image);
             } else {
+                // Gunakan placeholder jika tidak ada foto
                 $room->foto_display = $simulasiFoto[$key % count($simulasiFoto)];
             }
         }
@@ -39,12 +41,43 @@ class RoomController extends Controller
         return view('rooms.index', compact('rooms'));
     }
 
-    // 2. HALAMAN SETTING OO/OS (MAINTENANCE)
+    // 2. PROSES SIMPAN KAMAR BARU (Fungsi Baru)
+public function store(Request $request)
+{
+    // 1. Validasi (Sering ewor karena ukuran file atau tipe file salah)
+    $request->validate([
+        'room_number' => 'required|unique:rooms,room_number|max:10',
+        'type'        => 'required',
+        'price'       => 'required|numeric',
+        'foto'        => 'nullable|image|mimes:jpeg,png,jpg|max:5120', // Saya naikkan ke 5MB biar gak gampang mental
+    ]);
+
+  
+    
+    // 2. Cek apakah file benar-benar masuk
+      $imagePath = null;
+    if ($request->hasFile('foto')) {
+        // Simpan ke storage/app/public/rooms
+        // Gunakan storeAs kalau ingin nama file tidak acak, tapi store() sudah cukup.
+        $imagePath = $request->file('foto')->store('rooms', 'public');
+    }
+
+    // 3. Simpan ke Database
+    // PASTIKAN kolom di DB namanya 'image' sesuai array di bawah
+    Room::create([
+        'room_number' => $request->room_number,
+        'type'        => $request->type,
+        'price'       => $request->price,
+        'status'      => 'available',
+        'image'       => $imagePath, // Path yang disimpan: "rooms/namafile.jpg"
+    ]);
+
+    return redirect()->back()->with('success', 'Kamar nomor ' . $request->room_number . ' berhasil ditambahkan!');
+}
+
+    // 3. HALAMAN SETTING MAINTENANCE
     public function maintenancePage()
     {
-        // FILTER KEAMANAN:
-        // Hanya tampilkan kamar yang: Available, Dirty, atau sedang Rusak (OO/OS).
-        // Kamar 'Occupied' (Terisi) & 'Booked' DISEMBUNYIKAN agar tidak salah blokir.
         $rooms = Room::whereIn('status', ['available', 'vacant dirty', 'oo', 'os'])
                      ->orderBy('room_number')
                      ->get();
@@ -52,35 +85,27 @@ class RoomController extends Controller
         return view('rooms.maintenance', compact('rooms'));
     }
 
-    // 3. PROSES UPDATE STATUS OO/OS
+    // 4. PROSES UPDATE STATUS MAINTENANCE
     public function updateMaintenance(Request $request, $id)
     {
         $room = Room::findOrFail($id);
         
-        // VALIDASI BACKEND:
-        // Pastikan kamar tidak sedang terisi tamu saat tombol ditekan
         if ($room->status == 'occupied' || $room->status == 'booked') {
             return redirect()->back()->with('error', 'Gagal! Kamar ' . $room->room_number . ' sedang ada tamunya.');
         }
 
-        // LOGIKA RESET:
-        // Jika status diubah jadi 'available', hapus catatan kerusakannya
         $notes = $request->notes;
-        $type = $request->status; // oo atau os
+        $type = $request->status; 
 
-        if ($request->status == 'available') {
+        // Jika kembali ke normal, bersihkan catatan
+        if (in_array($request->status, ['available', 'vacant dirty'])) {
             $notes = null;
             $type = null;
-        } elseif ($request->status == 'vacant dirty') {
-             // Jika diset dirty (siap dibersihkan), anggap maintenance selesai
-             $notes = null;
-             $type = null;
         }
 
-        // Update Database
         $room->update([
-            'status' => $request->status, 
-            'maintenance_type' => $type,
+            'status'            => $request->status, 
+            'maintenance_type'  => $type,
             'maintenance_notes' => $notes,
         ]);
 

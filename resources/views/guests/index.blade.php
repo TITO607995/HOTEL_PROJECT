@@ -14,17 +14,27 @@
         ::-webkit-scrollbar-track { background: #f8fafc; }
         ::-webkit-scrollbar-thumb { background: #800000; border-radius: 10px; }
         .table-container { scrollbar-gutter: stable; }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
 
-<body class="bg-[#F8FAFC] text-slate-700">
+<body class="bg-[#F8FAFC] text-slate-700" x-data="{ 
+    selectedGuests: [], 
+    allIds: {{ $guests->pluck('id') }},
+    toggleAll() {
+        if (this.selectedGuests.length === this.allIds.length) {
+            this.selectedGuests = [];
+        } else {
+            this.selectedGuests = [...this.allIds];
+        }
+    }
+}">
 
     <header class="fixed top-0 left-0 right-0 z-[60] bg-white/80 backdrop-blur-md border-b border-gray-100">
         <x-header></x-header>
     </header>
 
     <div class="flex min-h-screen">
-        
         <aside class="fixed inset-y-0 left-0 w-64 z-50 bg-white border-r border-gray-100 hidden lg:block">
             <div class="pt-20 h-full">
                 <x-sidebar></x-sidebar>
@@ -32,7 +42,6 @@
         </aside>
 
         <div class="flex-1 lg:ml-64 flex flex-col pt-20">
-            
             <main class="p-6 md:p-10 lg:p-12">
                 
                 <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
@@ -47,19 +56,25 @@
                             </span>
                             MANAJEMEN TAMU
                         </h1>
-                        <p class="text-slate-500 text-sm mt-3 max-w-md leading-relaxed">
-                            Otoritas daftar tamu aktif dan kendali <span class="font-semibold text-slate-800 underline decoration-[#800000]/30">Mode Incognito</span> untuk privasi maksimal.
-                        </p>
                     </div>
                     
-                    <div class="flex gap-4">
-                        <div class="bg-white p-4 px-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-shadow">
-                            <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center">
-                                <i class="fas fa-address-book text-[#800000]"></i>
-                            </div>
+                    <div class="flex items-center gap-4">
+                        <div x-show="selectedGuests.length > 0" x-cloak x-transition class="flex items-center animate-bounce">
+                            <form action="{{ route('guests.bulk-delete') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tamu yang dipilih secara permanen?')">
+                                @csrf
+                                @method('DELETE')
+                                <input type="hidden" name="ids" :value="selectedGuests.join(',')">
+                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl text-[11px] font-black shadow-lg shadow-red-200 flex items-center gap-3 transition-all active:scale-95">
+                                    <i class="fas fa-trash-alt"></i>
+                                    HAPUS <span x-text="selectedGuests.length"></span> TAMU
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="bg-white p-4 px-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4">
                             <div>
-                                <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Terdaftar</span>
-                                <span class="text-2xl font-black text-slate-800">{{ $guests->count() }}</span>
+                                <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tamu Terpilih</span>
+                                <span class="text-2xl font-black text-slate-800" x-text="selectedGuests.length">0</span>
                             </div>
                         </div>
                     </div>
@@ -70,6 +85,12 @@
                         <table class="w-full border-collapse">
                             <thead>
                                 <tr class="bg-slate-50/50">
+                                    <th class="px-8 py-6 text-left border-b border-slate-100 w-10">
+                                        <input type="checkbox" 
+                                               @click="toggleAll()" 
+                                               :checked="selectedGuests.length === allIds.length && allIds.length > 0"
+                                               class="w-5 h-5 rounded-lg border-slate-300 text-[#800000] focus:ring-[#800000] cursor-pointer">
+                                    </th>
                                     <th class="px-8 py-6 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Informasi Profil</th>
                                     <th class="px-8 py-6 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Status Keamanan</th>
                                     <th class="px-8 py-6 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Kredensial</th>
@@ -78,7 +99,13 @@
                             </thead>
                             <tbody class="divide-y divide-slate-50">
                                 @forelse($guests as $guest)
-                                <tr class="group hover:bg-slate-50/50 transition-all duration-300">
+                                <tr class="group hover:bg-slate-50/50 transition-all duration-300" :class="selectedGuests.includes({{ $guest->id }}) ? 'bg-red-50/30' : ''">
+                                    <td class="px-8 py-6">
+                                        <input type="checkbox" 
+                                               x-model="selectedGuests" 
+                                               value="{{ $guest->id }}"
+                                               class="w-5 h-5 rounded-lg border-slate-300 text-[#800000] focus:ring-[#800000] cursor-pointer">
+                                    </td>
                                     <td class="px-8 py-6">
                                         <div class="flex items-center gap-5">
                                             <div class="relative">
@@ -99,48 +126,37 @@
                                             </div>
                                         </div>
                                     </td>
-
                                     <td class="px-8 py-6">
                                         <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl {{ $guest->is_incognito ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100' }}">
-                                            <span class="relative flex h-2 w-2">
-                                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full {{ $guest->is_incognito ? 'bg-indigo-400' : 'bg-emerald-400' }} opacity-75"></span>
-                                                <span class="relative inline-flex rounded-full h-2 w-2 {{ $guest->is_incognito ? 'bg-indigo-600' : 'bg-emerald-600' }}"></span>
-                                            </span>
                                             <span class="text-[10px] font-black uppercase tracking-widest">
                                                 {{ $guest->is_incognito ? 'Incognito Mode' : 'Verified Public' }}
                                             </span>
                                         </div>
                                     </td>
-
                                     <td class="px-8 py-6">
                                         <div class="flex flex-col">
-                                            <span class="text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">{{ $guest->email }}</span>
+                                            <span class="text-sm font-semibold text-slate-600">{{ $guest->email }}</span>
                                             <span class="text-[11px] text-slate-400 flex items-center gap-2 mt-1 italic">
-                                                <i class="far fa-clock text-[#800000]/50"></i>
                                                 Joined {{ $guest->created_at->diffForHumans() }}
                                             </span>
                                         </div>
                                     </td>
-
                                     <td class="px-8 py-6 text-center">
                                         <form action="{{ route('guests.toggle-incognito', $guest->id) }}" method="POST">
                                             @csrf
-                                            <button type="submit" class="inline-flex items-center gap-3 bg-white border-2 border-slate-100 text-slate-700 px-5 py-2.5 rounded-2xl text-[10px] font-black hover:border-[#800000] hover:text-[#800000] hover:bg-[#800000]/5 transition-all active:scale-95 shadow-sm">
+                                            <button type="submit" class="inline-flex items-center gap-3 bg-white border-2 border-slate-100 text-slate-700 px-5 py-2.5 rounded-2xl text-[10px] font-black hover:border-[#800000] hover:text-[#800000] transition-all active:scale-95">
                                                 <i class="fas fa-shield-alt"></i>
-                                                SWITCH PRIVACY
+                                                PRIVACY
                                             </button>
                                         </form>
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="py-32 text-center">
+                                    <td colspan="5" class="py-32 text-center">
                                         <div class="flex flex-col items-center">
-                                            <div class="w-40 h-40 bg-slate-50 rounded-full flex items-center justify-center mb-6">
-                                                <i class="fas fa-folder-open text-5xl text-slate-200"></i>
-                                            </div>
-                                            <h3 class="text-slate-800 font-bold text-lg">No Guest Records</h3>
-                                            <p class="text-slate-400 text-sm mt-1">Database is currently empty or filtered.</p>
+                                            <i class="fas fa-folder-open text-5xl text-slate-200 mb-6"></i>
+                                            <h3 class="text-slate-800 font-bold text-lg">No Active Records</h3>
                                         </div>
                                     </td>
                                 </tr>
@@ -149,22 +165,8 @@
                         </table>
                     </div>
                 </div>
-
-                <footer class="mt-16 pt-10 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div class="flex items-center gap-4">
-                        <div class="flex -space-x-2">
-                            <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-200"></div>
-                            <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-300"></div>
-                        </div>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">System Status: <span class="text-emerald-500 italic">Optimal</span></p>
-                    </div>
-                    <p class="text-[11px] font-medium text-slate-400 tracking-wide">
-                        &copy; 2026 <span class="text-slate-900 font-bold underline decoration-[#800000]">Hotel SIG</span>. Developed by <span class="text-slate-900">5NYeni</span>.
-                    </p>
-                </footer>
             </main>
         </div>
     </div>
-
 </body>
 </html>

@@ -63,12 +63,13 @@
 
                     <form action="" id="checkoutForm" method="POST">
                         @csrf
+                        <input type="hidden" name="guest_name" id="inputGuestName">
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
                             <div class="space-y-6">
                                 <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 shadow-sm no-print">
                                     <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Cari Reservasi Aktif</label>
-                                    <select id="resSelect" class="w-full bg-transparent border-none focus:ring-0 font-black text-lg text-[#800000] cursor-pointer" required>
+                                    <select id="resSelect" name="reservation_id" class="w-full bg-transparent border-none focus:ring-0 font-black text-lg text-[#800000] cursor-pointer" required>
                                         <option value="">-- PILIH TAMU / KAMAR --</option>
                                         @foreach($reservations as $r)
                                             <option value="{{ $r->id }}" 
@@ -186,6 +187,7 @@
         const addChargeInput = document.getElementById('addCharge');
         const grandTotalDisplay = document.getElementById('grandTotalDisplay');
         const submitBtn = document.getElementById('submitBtn');
+        const inputGuestName = document.getElementById('inputGuestName');
 
         function formatNumber(num) {
             return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')
@@ -208,11 +210,12 @@
             const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
             const roomSubtotal = nights * price;
 
-            // Update UI Atas
+            // Update UI & Hidden Input
             document.getElementById('displayRoom').innerText = opt.dataset.room;
             document.getElementById('displayIn').innerText = opt.dataset.in;
             document.getElementById('displayOut').innerText = opt.dataset.out;
             document.getElementById('printGuestName').innerText = opt.dataset.name;
+            inputGuestName.value = opt.dataset.name; // Simpan nama tamu ke hidden input
 
             // Update Tabel
             document.getElementById('detailRoomType').innerText = "Sewa Kamar (" + opt.dataset.type + ")";
@@ -224,6 +227,7 @@
             window.currentRoomSubtotal = roomSubtotal;
             calculateGrandTotal();
 
+            // Atur URL Action Form secara dinamis
             document.getElementById('checkoutForm').action = "/reservasi/check-out/" + this.value + "/process";
             submitBtn.disabled = false;
         });
@@ -243,6 +247,7 @@
             document.getElementById('displayRoom').innerText = "-";
             document.getElementById('displayNights').innerText = "0";
             document.getElementById('displayRoomSubtotal').innerText = "0";
+            inputGuestName.value = "";
         }
 
         // Alert Konfirmasi sebelum Submit
@@ -250,7 +255,7 @@
             e.preventDefault();
             Swal.fire({
                 title: 'Konfirmasi Check-out',
-                text: "Pastikan pembayaran telah diterima sesuai total invoice.",
+                text: "Tamu akan otomatis dihapus dari daftar tamu aktif.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#800000',
