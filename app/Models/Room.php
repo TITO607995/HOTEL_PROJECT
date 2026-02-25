@@ -18,7 +18,8 @@ class Room extends Model
         'image', 
         'status', 
         'maintenance_type', 
-        'maintenance_notes'
+        'maintenance_notes',
+        'guest_id',
     ];
 
     /**

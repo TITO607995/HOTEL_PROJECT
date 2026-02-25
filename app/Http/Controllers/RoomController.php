@@ -18,7 +18,7 @@ class RoomController extends Controller
             $query->where('room_number', 'like', '%' . $request->room_number . '%');
         }
 
-        $rooms = $query->orderBy('room_number', 'asc')->get();
+       $rooms = $query->orderBy('room_number', 'asc')->paginate(12);
 
         // Simulasi Foto (Placeholder)
         $simulasiFoto = [

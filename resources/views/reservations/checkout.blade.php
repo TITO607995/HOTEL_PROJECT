@@ -1,72 +1,85 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#800000">
+
+    <title>Check-out | Hotel SIG</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <title>Check-out | Website Hotel SIG</title>
+
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .border-dotted-b { border-bottom: 2px dotted #9ca3af; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow: hidden;
+            overscroll-behavior-y: contain;
+        }
+
+        .bg-maroon { background-color: #800000; }
+        .text-maroon { color: #800000; }
+        .border-dotted-b { border-bottom: 2px dotted #d1d5db; }
+
+        @media (min-width: 1024px) {
+            .custom-scroll::-webkit-scrollbar { width: 6px; }
+            .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+            .custom-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+            .custom-scroll::-webkit-scrollbar-thumb:hover { background: #800000; }
+        }
+
+        .safe-top { padding-top: env(safe-area-inset-top); }
         [x-cloak] { display: none !important; }
 
         @media print {
-            .no-print, x-sidebar, aside, x-header, button, .breadcrumb, nav {
-                display: none !important;
-            }
-            body { background: white !important; padding: 0; margin: 0; }
-            main { padding: 0 !important; margin: 0 !important; width: 100% !important; }
-            .max-w-4xl { max-width: 100% !important; box-shadow: none !important; border-top: 15px solid #800000 !important; }
-            .rounded-[2rem] { border-radius: 0 !important; }
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .no-print { display: none !important; }
+            body { overflow: visible !important; background: white !important; }
+            .print-area { box-shadow: none !important; border: none !important; margin: 0 !important; width: 100% !important; border-top: none !important; }
+            .invoice-card { border: 1px solid #eee !important; }
         }
     </style>
 </head>
-<body class="bg-gray-100 antialiased" x-data="checkoutPage()">
 
-    <div class="no-print">
+<body class="bg-[#F3F4F6] antialiased h-screen flex flex-col mb-20 lg:mb-0" x-data="checkoutPage()">
+
+    <header class="relative z-[60] safe-top bg-white lg:bg-transparent no-print">
         <x-header></x-header>
-    </div>
+    </header>
 
-    <div class="flex min-h-screen">
-        <div class="no-print flex-shrink-0">
+    <div class="flex flex-1 overflow-hidden">
+        <aside class="h-full flex-shrink-0 border-r border-gray-200 bg-white hidden lg:block no-print">
             <x-sidebar></x-sidebar>
-        </div>
+        </aside>
 
-        <main class="flex-1 p-6 lg:p-12 transition-all duration-300">
+        <main class="flex-1 p-4 md:p-8 lg:p-10 overflow-y-auto custom-scroll">
             
-            <div class="max-w-4xl mx-auto mb-6 flex justify-between items-center no-print breadcrumb">
+            <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 no-print">
                 <div>
-                    <h1 class="text-2xl font-extrabold text-gray-800 tracking-tight">Proses Check-out & Penagihan</h1>
-                    <p class="text-sm text-gray-500 font-medium">Lengkapi rincian biaya atau perpanjang masa menginap tamu.</p>
+                    <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Proses Check-out</h1>
+                    <p class="text-gray-500 font-medium">Lengkapi rincian biaya atau perpanjang masa menginap.</p>
                 </div>
-                <a href="{{ route('reservations.index') }}" class="flex items-center text-gray-400 hover:text-[#800000] transition font-bold text-sm">
-                    <i class="fas fa-arrow-left mr-2"></i> KEMBALI
+                <a href="{{ route('reservations.index') }}" class="flex items-center text-gray-400 hover:text-maroon transition-all font-bold text-xs tracking-widest group">
+                    <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> KEMBALI
                 </a>
             </div>
 
-            @if(session('success'))
-                <div class="max-w-5xl mx-auto mb-6 p-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 rounded-r-xl shadow-sm animate-fade-in-down no-print">
-                    <p class="font-bold"><i class="fas fa-check-circle mr-2"></i>Berhasil!</p>
-                    <p class="text-sm">{{ session('success') }}</p>
-                </div>
-            @endif
-
-            <div id="invoiceArea" class="max-w-5xl mx-auto bg-white rounded-[2rem] shadow-2xl overflow-hidden border-t-[15px] border-[#800000] mb-10">
-                <div class="p-8 md:p-12">
+            <div id="invoiceArea" class="max-w-5xl mx-auto bg-white rounded-[32px] shadow-2xl overflow-hidden border-t-[12px] border-[#800000] mb-10 print-area invoice-card transition-all">
+                <div class="p-6 md:p-12">
                     
-                    <div class="flex justify-between items-start mb-12 border-b border-gray-100 pb-8">
+                    <div class="flex flex-col md:flex-row justify-between items-start gap-6 mb-12 border-b border-gray-100 pb-8">
                         <div>
                             <h2 class="text-5xl font-black text-gray-900 tracking-tighter italic uppercase leading-none">Invoice</h2>
-                            <p class="text-[10px] text-gray-400 font-bold tracking-[0.3em] uppercase mt-2">Sistem Informasi Hotel SIG</p>
+                            <p class="text-[10px] text-gray-400 font-bold tracking-[0.3em] uppercase mt-3">Sistem Informasi Hotel SIG</p>
                         </div>
-                        <div class="text-right">
-                            <p class="font-black text-gray-800 text-lg uppercase">Website Simulasi PH</p>
-                            <p class="text-gray-500 text-xs italic">Jl. Arif Rahman Hakim No. 101, Gresik</p>
-                            <p class="text-gray-500 text-xs italic">Telp: (031) 555-0123</p>
+                        <div class="text-left md:text-right space-y-1">
+                            <p class="font-black text-gray-800 text-lg uppercase tracking-tight">Website Simulasi PH</p>
+                            <p class="text-gray-500 text-xs italic font-medium">Jl. Arif Rahman Hakim No. 101, Gresik</p>
+                            <p class="text-gray-500 text-xs italic font-medium">Telp: (031) 555-0123</p>
                         </div>
                     </div>
 
@@ -76,20 +89,19 @@
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
                             <div class="space-y-6">
-                                {{-- Area Pencarian Tamu & Tombol Extend --}}
-                                <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 shadow-sm no-print relative">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cari Tamu In-House</label>
+                                <div class="bg-gray-50 p-6 rounded-3xl border border-gray-100 shadow-sm no-print relative group transition-all hover:border-red-100">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pilih Reservasi Aktif</label>
                                         
-                                        {{-- TOMBOL EXTEND (Muncul via Alpine JS kalau tamu sudah dipilih) --}}
                                         <button type="button" x-show="selectedResId" x-cloak @click="openExtendModal()" 
-                                            class="bg-emerald-100 text-emerald-700 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border border-emerald-200">
-                                            <i class="fas fa-calendar-plus"></i> Extend
+                                            class="bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-2 border border-emerald-100">
+                                            <i class="fas fa-calendar-plus"></i> Perpanjang
                                         </button>
                                     </div>
                                     
-                                    <select id="resSelect" name="reservation_id" @change="handleGuestSelect($event)" class="w-full bg-transparent border-none focus:ring-0 font-black text-lg text-[#800000] cursor-pointer" required>
-                                        <option value="">-- PILIH TAMU / KAMAR --</option>
+                                    <select id="resSelect" name="reservation_id" @change="handleGuestSelect($event)" 
+                                        class="w-full bg-transparent border-none focus:ring-0 font-black text-xl text-maroon cursor-pointer appearance-none">
+                                        <option value="">-- PILIH TAMU --</option>
                                         @foreach($reservations as $r)
                                             <option value="{{ $r->id }}" 
                                                     data-room="{{ $r->room->room_number }}" 
@@ -102,88 +114,101 @@
                                             </option>
                                         @endforeach
                                     </select>
+                                    <div class="absolute right-6 bottom-7 text-gray-300 pointer-events-none group-hover:text-maroon transition-colors">
+                                        <i class="fas fa-chevron-down text-xs"></i>
+                                    </div>
                                 </div>
 
-                                <div class="hidden print:block border-dotted-b pb-2">
-                                    <p class="text-[10px] font-bold text-gray-400 uppercase">Nama Tamu</p>
-                                    <p id="printGuestName" class="font-bold text-xl">-</p>
+                                <div class="hidden print:block border-dotted-b pb-3">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nama Tamu</p>
+                                    <p id="printGuestName" class="font-extrabold text-2xl text-gray-900">-</p>
                                 </div>
                             </div>
 
-                            <div class="space-y-4 px-2">
-                                <div class="flex justify-between border-dotted-b pb-2">
-                                    <span class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Nomor Kamar</span>
-                                    <span id="displayRoom" class="font-black text-gray-800">-</span>
+                            <div class="bg-white p-2 space-y-5">
+                                <div class="flex justify-between items-end border-dotted-b pb-2">
+                                    <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Nomor Kamar</span>
+                                    <span id="displayRoom" class="font-black text-xl text-gray-800">-</span>
                                 </div>
-                                <div class="flex justify-between border-dotted-b pb-2">
-                                    <span class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Check-in</span>
-                                    <span id="displayIn" class="font-bold text-gray-800">-</span>
+                                <div class="flex justify-between items-end border-dotted-b pb-2">
+                                    <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Check-in</span>
+                                    <span id="displayIn" class="font-bold text-sm text-gray-700 tracking-tight">-</span>
                                 </div>
-                                <div class="flex justify-between border-dotted-b pb-2">
-                                    <span class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Check-out</span>
-                                    <span id="displayOut" class="font-bold text-gray-800">-</span>
+                                <div class="flex justify-between items-end border-dotted-b pb-2">
+                                    <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest text-maroon">Check-out</span>
+                                    <span id="displayOut" class="font-extrabold text-sm text-maroon tracking-tight">-</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="overflow-hidden rounded-2xl border border-gray-200 mb-10 shadow-sm">
+                        <div class="overflow-hidden rounded-3xl border border-gray-100 mb-10 shadow-sm">
                             <table class="w-full text-sm">
                                 <thead>
-                                    <tr class="bg-gray-900 text-white uppercase text-[10px] tracking-[0.2em]">
-                                        <th class="p-5 text-center w-16">No</th>
-                                        <th class="p-5 text-left">Deskripsi Layanan</th>
-                                        <th class="p-5 text-center">Durasi</th>
-                                        <th class="p-5 text-right">Harga (Rp)</th>
-                                        <th class="p-5 text-right">Subtotal (Rp)</th>
+                                    <tr class="bg-gray-900 text-white uppercase text-[9px] font-bold tracking-[0.2em]">
+                                        <th class="py-5 px-6 text-center w-16">No</th>
+                                        <th class="py-5 px-6 text-left">Deskripsi Layanan</th>
+                                        <th class="py-5 px-6 text-center">Durasi</th>
+                                        <th class="py-5 px-6 text-right">Harga Satuan</th>
+                                        <th class="py-5 px-6 text-right">Subtotal</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                    <tr class="bg-gray-50/50">
-                                        <td class="p-6 text-center font-bold text-gray-400">01</td>
+                                <tbody class="divide-y divide-gray-50">
+                                    <tr class="bg-gray-50/30">
+                                        <td class="p-6 text-center font-bold text-gray-300">01</td>
                                         <td class="p-6">
-                                            <p class="font-bold text-gray-800" id="detailRoomType">Sewa Kamar</p>
-                                            <p class="text-[10px] text-gray-400 uppercase italic" id="detailStayPeriod">Menunggu pilihan...</p>
+                                            <p class="font-extrabold text-gray-800 text-base" id="detailRoomType">Sewa Kamar</p>
+                                            <p class="text-[10px] text-gray-400 uppercase font-bold mt-1 italic" id="detailStayPeriod">Silakan pilih reservasi</p>
                                         </td>
-                                        <td class="p-6 text-center font-bold text-gray-800" id="displayNights">0</td>
-                                        <td class="p-6 text-right font-bold text-gray-800" id="displayPricePerNight">0</td>
+                                        <td class="p-6 text-center font-bold text-gray-700" id="displayNights">0</td>
+                                        <td class="p-6 text-right font-bold text-gray-700" id="displayPricePerNight">0</td>
                                         <td class="p-6 text-right font-black text-gray-900" id="displayRoomSubtotal">0</td>
                                     </tr>
-                                    <tr class="hover:bg-gray-50 transition no-print">
-                                        <td class="p-6 text-center font-bold text-gray-400">02</td>
+                                    <tr class="no-print group hover:bg-red-50/30 transition-colors">
+                                        <td class="p-6 text-center font-bold text-gray-300">02</td>
                                         <td class="p-6">
-                                            <input type="text" name="notes" placeholder="Catatan Tambahan (Minibar, Laundry...)" class="w-full bg-transparent border-none focus:ring-0 italic text-gray-600 placeholder:text-gray-300 p-0">
+                                            <input type="text" name="notes" placeholder="Tambahkan Catatan (Minimarket, Laundry, dll)..." 
+                                                class="w-full bg-transparent border-none focus:ring-0 italic text-sm text-gray-600 placeholder:text-gray-300 p-0 font-medium">
                                         </td>
-                                        <td class="p-6 text-center text-gray-400">-</td>
-                                        <td class="p-6 text-right text-gray-400 uppercase text-[10px] font-bold">Add Charge</td>
+                                        <td class="p-6 text-center text-gray-300">-</td>
+                                        <td class="p-6 text-right text-gray-400 uppercase text-[9px] font-black tracking-widest">Biaya Tambahan</td>
                                         <td class="p-6">
-                                            <input type="number" name="additional_charges" id="addCharge" value="0" @input="calculateGrandTotal" class="w-full bg-transparent border-none focus:ring-0 text-right font-black text-[#800000] text-xl p-0">
+                                            <div class="flex items-center justify-end gap-2">
+                                                <span class="text-xs font-bold text-gray-400 italic">Rp</span>
+                                                <input type="number" name="additional_charges" id="addCharge" value="0" @input="calculateGrandTotal" 
+                                                    class="w-32 bg-transparent border-b border-transparent group-hover:border-red-200 focus:border-maroon focus:ring-0 text-right font-black text-maroon text-xl p-0 transition-all">
+                                            </div>
                                         </td>
                                     </tr>
                                 </tbody>
                                 <tfoot>
-                                    <tr class="bg-gray-900">
-                                        <td colspan="4" class="p-6 text-right font-bold text-white uppercase tracking-widest text-xs">Total Akhir</td>
-                                        <td class="p-6 text-right font-black text-white text-3xl">
-                                            <span class="text-sm mr-1">Rp</span><span x-text="grandTotal">0</span>
+                                    <tr class="bg-gray-900 border-t-4 border-maroon">
+                                        <td colspan="4" class="p-8 text-right font-bold text-white uppercase tracking-[0.3em] text-[10px]">Total Pembayaran Akhir</td>
+                                        <td class="p-8 text-right">
+                                            <div class="flex items-start justify-end gap-1 text-white">
+                                                <span class="text-xs font-bold mt-2 opacity-50">Rp</span>
+                                                <span class="text-4xl font-black tracking-tighter" x-text="grandTotal">0</span>
+                                            </div>
                                         </td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
 
-                        <div class="flex flex-col md:flex-row justify-between items-center gap-10 mt-12 pt-10 border-t border-gray-100">
-                            <div class="text-center">
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-20 italic">Front Office Staff</p>
-                                <div class="w-56 h-px bg-gray-300 mx-auto"></div>
-                                <p class="text-[10px] mt-2 font-bold text-gray-800 uppercase tracking-widest">{{ Auth::user()->name ?? 'Administrator' }}</p>
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-12 mt-12 pt-10 border-t border-gray-50">
+                            <div class="text-center order-2 md:order-1">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-20 italic">Front Office Approval</p>
+                                <div class="w-64 h-px bg-gray-200 mx-auto"></div>
+                                <p class="text-[11px] mt-3 font-extrabold text-gray-800 uppercase tracking-widest">{{ Auth::user()->name ?? 'Administrator' }}</p>
                             </div>
                             
-                            <div class="flex gap-4 no-print items-center">
-                                <button type="button" onclick="window.print()" class="group bg-gray-100 text-gray-800 font-bold px-8 py-5 rounded-2xl hover:bg-gray-200 transition-all flex items-center gap-3">
-                                    <i class="fas fa-print opacity-50 group-hover:opacity-100"></i> CETAK
+                            <div class="flex flex-col sm:flex-row gap-4 no-print items-center w-full md:w-auto order-1 md:order-2">
+                                <button type="button" onclick="window.print()" 
+                                    class="w-full sm:w-auto bg-gray-100 text-gray-600 font-bold px-10 py-5 rounded-2xl hover:bg-gray-200 transition-all flex justify-center items-center gap-3 text-xs tracking-widest active:scale-95">
+                                    <i class="fas fa-print"></i> CETAK INVOICE
                                 </button>
-                                <button type="submit" id="submitBtn" :disabled="!selectedResId" class="bg-[#800000] disabled:bg-gray-200 disabled:text-gray-400 text-white font-black px-12 py-5 rounded-2xl shadow-xl hover:bg-red-900 transition-all flex items-center gap-3">
-                                    <span>KONFIRMASI CHECK-OUT</span> <i class="fas fa-check-circle"></i>
+                                <button type="submit" id="submitBtn" :disabled="!selectedResId" 
+                                    class="w-full sm:w-auto bg-maroon disabled:bg-gray-200 disabled:text-gray-400 text-white font-black px-14 py-5 rounded-2xl shadow-xl shadow-red-900/20 hover:bg-red-900 hover:-translate-y-1 transition-all flex justify-center items-center gap-3 text-xs tracking-widest active:scale-95">
+                                    KONFIRMASI CHECK-OUT <i class="fas fa-check-double"></i>
                                 </button>
                             </div>
                         </div>
@@ -193,42 +218,55 @@
         </main>
     </div>
 
-    {{-- MODAL EXTEND MENGINAP --}}
-    <div x-show="extendModal" x-cloak class="fixed inset-0 z-[100] overflow-y-auto no-print" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="extendModal" x-transition.opacity class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="extendModal = false"></div>
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-            
-            <div x-show="extendModal" x-transition class="inline-block align-bottom bg-white rounded-[2rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
-                <form :action="'/reservasi/extend/' + selectedResId" method="POST">
-                    @csrf
-                    <div class="bg-gradient-to-r from-emerald-600 to-emerald-500 px-8 py-6 text-white relative overflow-hidden">
-                        <i class="fas fa-calendar-plus absolute -right-4 -bottom-4 text-7xl opacity-20"></i>
-                        <h3 class="text-xl font-black uppercase tracking-wider flex items-center gap-2 relative z-10">
-                            <i class="fas fa-calendar-plus"></i> Perpanjang Menginap
-                        </h3>
-                        <p class="text-emerald-100 text-sm mt-1 relative z-10">Kamar <span x-text="guestInfo.room"></span> a.n <span x-text="guestInfo.name"></span></p>
-                    </div>
-                    
-                    <div class="bg-white px-8 pt-6 pb-6 text-left">
-                        <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Check-out Awal</p>
-                            <p class="text-lg font-black text-gray-800" x-text="guestInfo.outDate"></p>
-                        </div>
-
-                        <div>
-                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Pilih Tanggal Kepulangan Baru</label>
-                            <input type="date" name="new_departure_date" :min="guestInfo.minNewDate" class="w-full rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-100 text-sm font-bold text-gray-700 p-3" required>
-                        </div>
-                    </div>
-                    <div class="bg-gray-50 px-8 py-5 flex justify-end gap-3 border-t border-gray-100">
-                        <button type="button" @click="extendModal = false" class="px-6 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black text-gray-600 hover:bg-gray-50 transition-all">BATAL</button>
-                        <button type="submit" class="px-6 py-3 bg-emerald-600 text-white rounded-xl text-xs font-black shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 transition-all active:scale-95">SIMPAN PERPANJANGAN</button>
-                    </div>
-                </form>
+    <div x-show="extendModal" 
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         x-cloak>
+        
+        <div class="bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl" @click.away="extendModal = false">
+            <div class="bg-maroon p-8 text-white">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-black italic uppercase tracking-tighter">Perpanjang</h3>
+                    <button @click="extendModal = false" class="text-white/50 hover:text-white"><i class="fas fa-times"></i></button>
+                </div>
+                <p class="text-white/70 text-xs font-bold uppercase tracking-widest mt-1">Update masa menginap</p>
             </div>
+            
+            <form :action="'/reservasi/perpanjang/' + selectedResId" method="POST" class="p-8 space-y-6">
+                @csrf
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Nama Tamu</label>
+                    <p class="font-bold text-gray-800 text-lg" x-text="guestInfo.name"></p>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Check-out Baru</label>
+                    <input type="date" name="new_departure_date" :min="guestInfo.minNewDate" required
+                           class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-4 font-bold text-gray-700 focus:border-maroon focus:ring-0 transition-all">
+                    <p class="text-[9px] text-gray-400 mt-2 italic font-medium">*Minimal H+1 dari jadwal awal.</p>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" @click="extendModal = false"
+                            class="flex-1 bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl hover:bg-gray-200 transition-all text-xs tracking-widest">
+                        BATAL
+                    </button>
+                    <button type="submit"
+                            class="flex-1 bg-maroon text-white font-black py-4 rounded-2xl shadow-lg shadow-red-900/20 hover:bg-red-900 transition-all text-xs tracking-widest">
+                        SIMPAN
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+
+    <x-bottom-nav></x-bottom-nav>
+    <x-mobile-menu></x-mobile-menu>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
@@ -241,7 +279,7 @@
                 guestInfo: { name: '', room: '', outDate: '', minNewDate: '' },
 
                 formatNumber(num) {
-                    return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')
+                    return num.toLocaleString('id-ID');
                 },
 
                 handleGuestSelect(e) {
@@ -253,6 +291,7 @@
                         return;
                     }
 
+                    // Calculation Logic
                     const dateIn = new Date(opt.dataset.in);
                     const dateOut = new Date(opt.dataset.out);
                     const price = parseInt(opt.dataset.price) || 0;
@@ -261,28 +300,38 @@
                     const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
                     this.roomSubtotal = nights * price;
 
-                    // Update Info untuk Form Check-out
-                    document.getElementById('displayRoom').innerText = opt.dataset.room;
-                    document.getElementById('displayIn').innerText = opt.dataset.in;
-                    document.getElementById('displayOut').innerText = opt.dataset.out;
-                    document.getElementById('printGuestName').innerText = opt.dataset.name;
-                    document.getElementById('inputGuestName').value = opt.dataset.name;
-                    document.getElementById('detailRoomType').innerText = "Sewa Kamar (" + opt.dataset.type + ")";
-                    document.getElementById('detailStayPeriod').innerText = opt.dataset.in + " s/d " + opt.dataset.out;
-                    document.getElementById('displayNights').innerText = nights + " Malam";
-                    document.getElementById('displayPricePerNight').innerText = this.formatNumber(price);
-                    document.getElementById('displayRoomSubtotal').innerText = this.formatNumber(this.roomSubtotal);
-                    document.getElementById('checkoutForm').action = "/reservasi/check-out/" + this.selectedResId + "/process";
-
-                    // Update Data untuk Modal Extend
+                    // Update UI Elements
+                    this.updateUI(opt, nights, price);
+                    
+                    // Sync Guest Info for Extend Modal
                     this.guestInfo.name = opt.dataset.name;
-                    this.guestInfo.room = opt.dataset.room;
-                    this.guestInfo.outDate = opt.dataset.out;
-                    let nextDay = new Date(dateIn);
-                    nextDay.setDate(nextDay.getDate() + 1);
-                    this.guestInfo.minNewDate = nextDay.toISOString().split('T')[0];
+                    let d = new Date(dateOut);
+                    d.setDate(d.getDate() + 1);
+                    this.guestInfo.minNewDate = d.toISOString().split('T')[0];
 
                     this.calculateGrandTotal();
+                },
+
+                updateUI(opt, nights, price) {
+                    const elements = {
+                        'displayRoom': opt.dataset.room,
+                        'displayIn': opt.dataset.in,
+                        'displayOut': opt.dataset.out,
+                        'printGuestName': opt.dataset.name,
+                        'inputGuestName': opt.dataset.name,
+                        'detailRoomType': `Sewa Kamar (${opt.dataset.type})`,
+                        'detailStayPeriod': `${opt.dataset.in} s/d ${opt.dataset.out}`,
+                        'displayNights': `${nights} Malam`,
+                        'displayPricePerNight': this.formatNumber(price),
+                        'displayRoomSubtotal': this.formatNumber(this.roomSubtotal)
+                    };
+
+                    for (const [id, val] of Object.entries(elements)) {
+                        const el = document.getElementById(id);
+                        if (el) el[el.tagName === 'INPUT' ? 'value' : 'innerText'] = val;
+                    }
+
+                    document.getElementById('checkoutForm').action = `/reservasi/check-out/${this.selectedResId}/process`;
                 },
 
                 calculateGrandTotal() {
@@ -293,33 +342,45 @@
                 resetUI() {
                     this.roomSubtotal = 0;
                     this.grandTotal = '0';
-                    document.getElementById('displayRoom').innerText = "-";
-                    document.getElementById('displayIn').innerText = "-";
-                    document.getElementById('displayOut').innerText = "-";
-                    document.getElementById('printGuestName').innerText = "-";
-                    document.getElementById('inputGuestName').value = "";
-                    document.getElementById('checkoutForm').action = "";
+                    this.selectedResId = '';
+                    const resetIds = ['displayRoom', 'displayIn', 'displayOut', 'printGuestName', 'displayNights', 'displayPricePerNight', 'displayRoomSubtotal'];
+                    resetIds.forEach(id => {
+                        const el = document.getElementById(id);
+                        if(el) el.innerText = id.includes('display') && !id.includes('Nights') ? "-" : "0";
+                    });
+                    document.getElementById('detailStayPeriod').innerText = "Silakan pilih reservasi";
                 },
 
                 openExtendModal() {
-                    if(this.selectedResId) this.extendModal = true;
+                    if(this.selectedResId) {
+                        this.extendModal = true;
+                    }
                 }
             }
         }
 
-        // SweetAlert Konfirmasi
+        // Global Alert handler untuk SweetAlert Laravel (Optional)
+        @if(session('success'))
+            Swal.fire('Berhasil!', "{{ session('success') }}", 'success');
+        @endif
+
+        // Submit Protection
         document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            const total = document.querySelector('[x-text="grandTotal"]').innerText;
+            
             Swal.fire({
-                title: 'Konfirmasi Check-out',
-                text: "Pastikan tagihan Rp" + document.getElementById('grandTotalDisplay').innerText + " telah lunas.",
+                title: 'KONFIRMASI',
+                html: `Pastikan tagihan <b>Rp ${total}</b> sudah lunas.`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#800000',
-                confirmButtonText: 'Ya, Selesaikan!',
-                cancelButtonText: 'Batal'
+                confirmButtonText: 'YA, CHECK-OUT',
+                cancelButtonText: 'BATAL'
             }).then((result) => {
-                if (result.isConfirmed) this.submit();
+                if (result.isConfirmed) {
+                    this.submit();
+                }
             });
         });
     </script>

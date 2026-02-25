@@ -126,6 +126,9 @@ Route::post('/pembayaran/store', [PaymentController::class, 'store'])->name('pay
 Route::delete('/guests/bulk-delete', [GuestController::class, 'bulkDelete'])->name('guests.bulk-delete');
 
 Route::post('/rooms/store', [RoomController::class, 'store'])->name('rooms.store');
+
+// Route untuk memproses perpanjangan tanggal
+Route::post('/reservasi/perpanjang/{id}', [ReservationController::class, 'extend'])->name('reservations.extend');
 });
 
 require __DIR__.'/auth.php';

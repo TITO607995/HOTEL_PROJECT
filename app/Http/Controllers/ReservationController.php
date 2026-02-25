@@ -62,7 +62,6 @@ class ReservationController extends Controller
                 ['email' => $request->email], // Cari berdasarkan email
                 [
                     'guest_name'   => $request->guest_name,
-                    'phone'        => $request->phone,
                     'is_incognito' => false
                 ]
             );
@@ -86,18 +85,24 @@ class ReservationController extends Controller
         return view('reservations.registration', compact('reservations'));
     }
 
-    // 5. PROSES CHECK-IN
-    public function checkin($id)
-    {
-        DB::transaction(function () use ($id) {
-            $reservation = Reservation::findOrFail($id);
-            $reservation->update(['status' => 'checked-in', 'reservation_type' => 'guaranteed']);
-            $reservation->room->update(['status' => 'occupied']);
-        });
+    // 5. PROSES CHECK-IN (Update status reservasi + update status kamar jadi occupied)
+ public function checkin($id)
+{
+    DB::transaction(function () use ($id) {
+        $reservation = Reservation::with('room')->findOrFail($id);
 
-        return redirect()->back()->with('success', 'Check-in Berhasil!');
-    }
+        // Update status reservasi (opsional, sesuaikan dengan enum di DB kamu)
+        $reservation->update(['status' => 'checked-in']);
 
+        // Update status di tabel rooms
+        $reservation->room->update([
+            'status' => 'occupied', // Ubah jadi occupied
+            'guest_id' => $reservation->guest_id // Hubungkan ke tamu
+        ]);
+    });
+
+    return redirect()->back()->with('success', 'Tamu telah masuk kamar (Occupied)!');
+}
     // 6. HALAMAN CHECK-OUT
     public function checkoutPage()
     {

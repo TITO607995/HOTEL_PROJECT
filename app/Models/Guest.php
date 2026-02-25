@@ -15,7 +15,8 @@ class Guest extends Model
         'email',
         'is_incognito',
         'phone',
-        'status' // WAJIB TAMBAHKAN INI
+        'status', // WAJIB TAMBAHKAN INI
+        'guest_id', // WAJIB TAMBAHKAN INI
     ];
 
     /**
@@ -30,5 +31,12 @@ class Guest extends Model
                 $model->status = 'active'; // Set status awal jadi active
             }
         });
+    }
+    public function room()
+    {   
+        return $this->hasOne(Room::class, 'guest_id', 'id');
+    }
+    public function IsActive(){
+        return $this->status === 'active'|| $this->rooms()->exits();
     }
 }
