@@ -33,9 +33,10 @@ class Guest extends Model
         });
     }
     public function room()
-    {   
-        return $this->hasOne(Room::class, 'guest_id', 'id');
-    }
+{
+    // Change this from $this->hasOne(Room::class);
+    return $this->belongsTo(Room::class);
+}
     public function IsActive(){
         return $this->status === 'active'|| $this->rooms()->exits();
     }
