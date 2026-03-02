@@ -33,7 +33,20 @@
         .safe-top { padding-top: env(safe-area-inset-top); }
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
         
-        .nav-item:active i { transform: scale(0.8); transition: 0.1s; }
+        /* Custom Pagination Styling */
+        .pagination-container nav div:first-child { display: none; }
+        .pagination-container svg { width: 20px; height: 20px; }
+        .pagination-container span[aria-current="page"] span { 
+            background-color: #800000 !important; 
+            color: white !important; 
+            border-color: #800000 !important;
+        }
+        .pagination-container a, .pagination-container span {
+            border-radius: 10px !important;
+            font-weight: 700;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
     </style>
 </head>
 
@@ -109,7 +122,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
-                            @forelse($roomList as $room)
+                            @forelse($rooms as $room)
                             <tr class="group hover:bg-gray-50 transition-colors">
                                 <td class="px-6 py-6 font-black text-gray-800 text-lg group-hover:text-[#800000]">{{ $room['no'] }}</td>
                                 <td class="px-6 py-6 italic font-bold text-gray-600 text-sm">{{ $room['left_status'] }}</td>
@@ -129,17 +142,20 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="px-8 py-6 bg-gray-50 border-t border-gray-100 pagination-container">
+                    {{ $rooms->onEachSide(1)->links() }}
+                </div>
             </div>
             
             <p class="mt-10 text-center text-[10px] text-gray-300 font-bold uppercase tracking-[0.5em] pb-10">Hotel SIG System v2.1</p>
         </main>
     </div>
 
- <x-bottom-nav></x-bottom-nav>
+    <x-bottom-nav></x-bottom-nav>
     <x-mobile-menu></x-mobile-menu>
 
     <script>
-        // Realtime Clock Dashboard
         function updateTime() {
             const now = new Date();
             const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
@@ -154,13 +170,6 @@
 
         setInterval(updateTime, 1000);
         updateTime();
-
-        // PWA Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed', err));
-            });
-        }
     </script>
 </body>
 </html>

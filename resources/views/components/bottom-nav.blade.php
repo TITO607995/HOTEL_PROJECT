@@ -1,5 +1,6 @@
 <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-100 px-6 py-3 z-[100] safe-bottom flex justify-between items-center shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.05)]">
     
+    {{-- Rooms --}}
     <a href="{{ route('rooms.index') }}" class="flex flex-col items-center gap-1 transition-all {{ request()->is('rooms*') ? 'text-[#800000]' : 'text-gray-400' }}">
         <div class="relative">
             <i class="fas fa-bed text-xl"></i>
@@ -13,11 +14,13 @@
         <span class="text-[9px] font-bold uppercase tracking-tighter">Rooms</span>
     </a>
 
+    {{-- Orders/Reservations --}}
     <a href="{{ route('reservations.index') }}" class="flex flex-col items-center gap-1 transition-all {{ request()->is('reservasi') || request()->routeIs('reservations.index') ? 'text-[#800000]' : 'text-gray-400' }}">
         <i class="fas fa-clipboard-list text-xl"></i>
         <span class="text-[9px] font-bold uppercase tracking-tighter">Orders</span>
     </a>
     
+    {{-- Dashboard Center Button --}}
     <div class="relative -mt-14">
         <div class="absolute inset-0 -m-2 bg-[#F8FAFC] rounded-full border-t border-gray-100"></div>
         
@@ -32,13 +35,23 @@
         </div>
     </div>
 
+    {{-- Checkout/Out --}}
     <a href="{{ route('reservations.checkout.page') }}" class="flex flex-col items-center gap-1 transition-all {{ request()->routeIs('reservations.checkout.page') ? 'text-[#800000]' : 'text-gray-400' }}">
         <i class="fas fa-sign-out-alt text-xl"></i>
         <span class="text-[9px] font-bold uppercase tracking-tighter">Out</span>
     </a>
     
-    <button @click="mobileMenu = true" class="flex flex-col items-center gap-1 text-gray-400 active:text-[#800000] bg-transparent border-none outline-none">
-        <i class="fas fa-bars text-xl"></i>
-        <span class="text-[9px] font-bold uppercase tracking-tighter">Menu</span>
-    </button>
+    {{-- Guest Management (GANTINYA MENU) --}}
+    <a href="{{ route('guests.index') }}" class="flex flex-col items-center gap-1 transition-all {{ request()->is('guests*') ? 'text-[#800000]' : 'text-gray-400' }}">
+        <div class="relative">
+            <i class="fas fa-users text-xl"></i>
+            @if(request()->is('guests*'))
+                <span class="absolute -top-1 -right-1 flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-[#800000]"></span>
+                </span>
+            @endif
+        </div>
+        <span class="text-[9px] font-bold uppercase tracking-tighter">Guests</span>
+    </a>
 </nav>

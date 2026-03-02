@@ -6,6 +6,7 @@ use App\Models\Room;
 use App\Models\User;
 use App\Models\Checkout;
 use Illuminate\Http\Request;
+use App\Models\Transaction;
 
 class ReportController extends Controller
 {

@@ -9,79 +9,72 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function index()
-    {
-        // 1. Ambil Username
-        $username = Auth::check() ? Auth::user()->name : "Resepsionis";
+   public function index()
+{
+    // 1. Ambil Username
+    $username = Auth::check() ? Auth::user()->name : "Resepsionis";
 
-        // 2. Statistik (Disesuaikan dengan kartu di Dashboard Blade)
-        $stats = [
-            'Standard' => Room::where('type', 'Standard')->count(),
-            'Deluxe'   => Room::where('type', 'Deluxe')->count(),
-            'Suite'    => Room::where('type', 'Suite')->count(),
-        ];
+    // 2. Statistik
+    $stats = [
+        'Standard' => Room::where('type', 'Standard')->count(),
+        'Deluxe'   => Room::where('type', 'Deluxe')->count(),
+        'Suite'    => Room::where('type', 'Suite')->count(),
+    ];
 
-        // 3. Ambil data Room untuk Monitoring Live
-        // Kita hanya mengambil kamar yang TIDAK 'available' agar fokus ke monitoring
-        $rawRooms = Room::with(['reservations' => function($q) {
-            $q->latest(); // Ambil reservasi terakhir untuk cek data tamu
+    // 3. Ambil data Room dengan PAGINATE (Jangan pakai ->get())
+    $rooms = Room::with(['reservations' => function($q) {
+            $q->latest(); 
         }])
         ->where('status', '!=', 'available') 
         ->orderBy('room_number')
-        ->get();
+        ->paginate(10); // <--- Kuncinya di sini
 
-        // 4. MAPPING Data agar sesuai dengan variabel $roomList di Blade
-        $roomList = $rawRooms->map(function ($room) {
-            // Ambil data reservasi terakhir jika ada
-            $latestRes = $room->reservations->first();
-            
-            // Logika Warna Badge Action
-            $color = match ($room->status) {
-                'occupied'     => 'bg-red-600',      // Merah untuk terisi
-                'booked'       => 'bg-blue-500',     // Biru untuk booking
-                'vacant dirty' => 'bg-yellow-500',   // Kuning untuk kotor
-                'oo'           => 'bg-black',        // Hitam untuk Rusak Berat
-                'os'           => 'bg-gray-600',     // Abu tua untuk Service
-                default        => 'bg-green-500',    // Hijau (Available)
-            };
+    // 4. MAPPING melalui Collection (Tapi tetap pertahankan objek paginatornya)
+    // Kita buat variabel baru $roomList untuk di looping di Blade
+    $roomList = $rooms->getCollection()->map(function ($room) {
+        $latestRes = $room->reservations->first();
+        
+        $color = match ($room->status) {
+            'occupied'     => 'bg-red-600',
+            'booked'       => 'bg-blue-500',
+            'vacant dirty' => 'bg-yellow-500',
+            'oo'           => 'bg-black',
+            'os'           => 'bg-gray-600',
+            default        => 'bg-green-500',
+        };
 
-            // Logika Status Kiri (Teks Miring)
-            $leftStatus = match ($room->status) {
-                'occupied'     => 'In-house',
-                'vacant dirty' => 'Dirty',
-                'booked'       => 'Booked',
-                'oo', 'os'     => 'Maintenance',
-                default        => '-'
-            };
+        $leftStatus = match ($room->status) {
+            'occupied'     => 'In-house',
+            'vacant dirty' => 'Dirty',
+            'booked'       => 'Booked',
+            'oo', 'os'     => 'Maintenance',
+            default        => '-'
+        };
 
-            // Logika Data Tamu & Pembayaran
-            $guestInfo = '-';
-            $isPaid = false;
-            $visibility = 'Public';
+        $guestInfo = '-';
+        $isPaid = false;
 
-            // Jika statusnya Occupied atau Booked, ambil data dari reservasi
-            if ($latestRes && in_array($room->status, ['occupied', 'booked'])) {
-                $guestInfo = $latestRes->payment_method; // Atau $latestRes->guest_name jika mau nama
-                $isPaid = $latestRes->reservation_type == 'guaranteed';
-                $visibility = $latestRes->is_incognito ? 'Incognito' : 'Public';
-            } elseif ($room->status == 'oo' || $room->status == 'os') {
-                $guestInfo = 'Repair'; // Info pengganti jika maintenance
-            }
+        if ($latestRes && in_array($room->status, ['occupied', 'booked'])) {
+            $guestInfo = $latestRes->payment_method;
+            $isPaid = $latestRes->reservation_type == 'guaranteed';
+        } elseif ($room->status == 'oo' || $room->status == 'os') {
+            $guestInfo = 'Repair';
+        }
 
-            return [
-                'no'           => $room->room_number,
-                'type'         => $room->type,
-                'left_status'  => $leftStatus,
-                'payment'      => $guestInfo,
-                'is_paid'      => $isPaid,
-                'action'       => strtoupper($room->status), // Teks tombol kanan
-                'action_color' => $color,
-                'visibility'   => $visibility,
-            ];
-        });
+        return [
+            'no'           => $room->room_number,
+            'left_status'  => $leftStatus,
+            'payment'      => $guestInfo,
+            'is_paid'      => $isPaid,
+            'action'       => strtoupper($room->status),
+            'action_color' => $color,
+        ];
+    });
 
-        // 5. Kirim ke View
-        // Penting: Variable harus bernama 'roomList' dan 'stats' agar cocok dengan Blade
-        return view('dashboard', compact('username', 'roomList', 'stats'));
+    // Masukkan kembali collection yang sudah di-map ke dalam objek paginator
+    $rooms->setCollection($roomList);
+
+    // 5. Kirim ke View (Gunakan $rooms untuk links dan looping)
+    return view('dashboard', compact('username', 'stats', 'rooms'));
     }
 }

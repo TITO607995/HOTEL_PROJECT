@@ -137,7 +137,7 @@
                             $filteredRooms = ($tabType === 'Semua') ? $rooms : $rooms->where('type', $tabType);
                         @endphp
 
-                        @forelse($filteredRooms as $room)
+                       @forelse($filteredRooms as $room)
                         <div class="room-card group bg-white rounded-[32px] border border-gray-100 flex flex-col h-full hover:shadow-xl overflow-hidden">
                             <div class="relative h-40 overflow-hidden m-2 rounded-[24px]">
                                 <img src="{{ $room->foto_display }}" 
@@ -161,22 +161,21 @@
                                 <div class="flex items-center justify-between pt-3 border-t border-gray-50">
                                     @php
                                         $status = strtolower($room->status);
-                                        $style = match($status) {
-                                            'available' => 'bg-green-100 text-green-600 icon-fa-check-circle',
-                                            'occupied' => 'bg-red-100 text-red-600 icon-fa-user-check',
-                                            'booked' => 'bg-orange-100 text-orange-600 icon-fa-calendar-alt',
-                                            'vacant dirty' => 'bg-yellow-100 text-yellow-700 icon-fa-broom',
-                                            default => 'bg-gray-100 text-gray-600 icon-fa-question'
+                                        $statusConfig = match($status) {
+                                            'available'    => ['class' => 'bg-green-100 text-green-600', 'icon' => 'fa-check-circle'],
+                                            'occupied'     => ['class' => 'bg-red-100 text-red-600', 'icon' => 'fa-user-check'],
+                                            'booked'       => ['class' => 'bg-orange-100 text-orange-600', 'icon' => 'fa-calendar-alt'],
+                                            'vacant dirty' => ['class' => 'bg-yellow-100 text-yellow-700', 'icon' => 'fa-broom'],
+                                            default        => ['class' => 'bg-gray-100 text-gray-600', 'icon' => 'fa-question'],
                                         };
-                                        $parts = explode(' icon-', $style);
                                     @endphp
 
-                                    <div class="{{ $parts[0] }} px-4 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-2">
-                                        <i class="fas {{ $parts[1] }}"></i>
-                                        {{ $room->status }}
+                                    <div class="{{ $statusConfig['class'] }} px-4 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-2">
+                                        <i class="fas {{ $statusConfig['icon'] }}"></i>
+                                        {{ strtoupper($room->status) }}
                                     </div>
                                     
-                                    @if(auth()->check() && auth()->user()->role && (auth()->user()->role->name === 'Superadmin' || auth()->user()->role->name === 'SUPERADMIN'))
+                                    @if(auth()->check() && auth()->user()->role && in_array(strtoupper(auth()->user()->role->name), ['SUPERADMIN']))
                                     <button class="w-10 h-10 rounded-full hover:bg-gray-50 text-gray-300 hover:text-maroon transition-all">
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
@@ -186,9 +185,9 @@
                         </div>
                         @empty
                         <div class="col-span-full text-center py-20 bg-white rounded-[32px] border border-dashed border-gray-200">
-                            <p class="text-gray-400 font-medium italic">Tidak ada unit {{ $tabType }} di halaman ini.</p>
+                            <p class="text-gray-400 font-medium italic">Tidak ada unit di kategori ini.</p>
                         </div>
-                        @endforelse 
+                        @endforelse
                     </div>
                 </div>
                 @endforeach

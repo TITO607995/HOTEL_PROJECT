@@ -80,7 +80,7 @@
             <div class="border-t border-white/10 mb-3 mx-2"></div>
             
             {{-- 5. STATUS OO/OS (MAINTENANCE) --}}
-            <a href="{{ route('rooms.maintenance.page') }}" 
+            <a href="{{ route('rooms.maintenance') }}" 
                class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 
                {{ request()->routeIs('rooms.maintenance.*') ? 'bg-white/20 font-bold shadow-inner text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
                  <span class="text-lg w-6 text-center">🛠️</span> 
@@ -158,7 +158,13 @@
             </div>
         </div>
         @endif
-
+        {{-- 6. DEVICE MONITORING --}}
+    <a href="{{ route('admin.devices') }}" 
+            class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 
+        {{ request()->routeIs('admin.devices') ? 'bg-white/20 font-bold shadow-inner text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+        <span class="text-lg w-6 text-center">📱</span> 
+        <span>Device Monitor</span>
+</a>
     </nav>
 
     {{-- FOOTER: LOGOUT & INFO --}}
