@@ -110,4 +110,7 @@ Route::middleware(['auth'])->group(function () {
         return 'Data berhasil diperbaiki';
     });
     Route::delete('/guests/bulk-delete', [GuestController::class, 'bulkDelete'])->name('guests.bulk-delete');
-});
+    Route::get('/reservations/history', [ReservationController::class, 'history'])->name('reservations.history');
+    // Tambahkan ini di routes/web.php
+Route::get('/reservations/{id}/history', [ReservationController::class, 'moveToHistory'])->name('reservations.moveToHistory');
+    });

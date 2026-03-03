@@ -11,12 +11,9 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F9FAFB; }
         .glass-header { background: rgba(255, 255, 255, 0.8); backdrop-blur: 10px; }
-        .card-shadow { shadow-[0_20px_50px_rgba(0,0,0,0.02)]; }
-        /* Animasi halus untuk button */
         .btn-checkin { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .btn-checkin:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(128, 0, 0, 0.3); }
+        .btn-checkin:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(128, 0, 0, 0.1); }
         
-        /* TAMBAHAN: Animasi ayun bell */
         @keyframes swing {
             0% { transform: rotate(0deg); }
             10% { transform: rotate(10deg); }
@@ -26,6 +23,9 @@
             100% { transform: rotate(0deg); }
         }
         .animate-swing { animation: swing 2s infinite; }
+
+        .swal2-html-container::-webkit-scrollbar { width: 4px; }
+        .swal2-html-container::-webkit-scrollbar-thumb { background: #800000; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -65,7 +65,7 @@
             </div>
 
             @if(session('success'))
-                <div class="max-w-6xl mx-auto mb-8 p-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-2xl flex items-center gap-3 animate-fade-in-down">
+                <div class="max-w-6xl mx-auto mb-8 p-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-2xl flex items-center gap-3">
                     <i class="fas fa-check-circle"></i>
                     <span class="text-xs font-bold uppercase tracking-wider">{{ session('success') }}</span>
                 </div>
@@ -98,7 +98,7 @@
                                 </div>
                             </td>
 
-                            <td class="px-8 py-7">
+                            <td class="px-8 py-7 text-center">
                                 <div class="flex flex-col items-center">
                                     <span class="text-2xl font-black text-gray-900 group-hover:text-[#800000] transition-colors">
                                         {{ $res->room->room_number }}
@@ -111,8 +111,8 @@
 
                             <td class="px-8 py-7">
                                 <div class="inline-flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
-                                    <div class="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center">
-                                        <i class="fas fa-wallet text-[#800000] text-xs"></i>
+                                    <div class="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-[#800000]">
+                                        <i class="fas fa-wallet text-xs"></i>
                                     </div>
                                     <div>
                                         <span class="block text-[8px] font-bold text-gray-400 uppercase leading-none mb-1">Via</span>
@@ -122,70 +122,152 @@
                             </td>
 
                             <td class="px-8 py-7 text-right">
-                                @if($res->reservation_type == 'non-guaranteed')
-                                    {{-- MODIFIKASI: Arahkan ke route pembayaran --}}
-                                    <button onclick="redirectToPayment({{ $res->id }}, '{{ $res->guest_name }}')" 
-                                        class="btn-checkin bg-blue-600 text-white text-[10px] font-black px-6 py-3.5 rounded-xl shadow-lg shadow-blue-100 uppercase tracking-widest inline-flex items-center gap-2">
-                                        <i class="fas fa-hand-holding-usd"></i> Settlement & In
+                                <div class="flex items-center justify-end gap-2">
+                                    <button onclick='showGuestDetail(@json($res->load("room")))' 
+                                        class="btn-checkin bg-gray-100 text-gray-600 text-[10px] font-black px-4 py-3.5 rounded-xl uppercase tracking-widest inline-flex items-center gap-2 hover:bg-gray-200">
+                                        <i class="fas fa-eye text-sm"></i> Detail
                                     </button>
-                                @else
-                                    <form action="{{ route('reservations.checkin', $res->id) }}" method="POST" class="inline-block" onsubmit="return handleCheckin(this)">
-                                        @csrf
-                                        <button type="submit" 
-                                            class="btn-checkin bg-[#800000] text-white text-[10px] font-black px-6 py-3.5 rounded-xl shadow-lg shadow-red-100 uppercase tracking-widest inline-flex items-center gap-2">
-                                            <i class="fas fa-key-skeleton"></i> Activate Room
+
+                                    @if($res->reservation_type == 'non-guaranteed')
+                                        <button onclick="redirectToPayment({{ $res->id }}, '{{ $res->guest_name }}')" 
+                                            class="btn-checkin bg-blue-600 text-white text-[10px] font-black px-6 py-3.5 rounded-xl shadow-lg shadow-blue-100 uppercase tracking-widest inline-flex items-center gap-2">
+                                            <i class="fas fa-hand-holding-usd"></i> Settlement & In
                                         </button>
-                                    </form>
-                                @endif
+                                    @else
+                                        <form action="{{ route('reservations.checkin', $res->id) }}" method="POST" class="inline-block" onsubmit="return handleCheckin(this)">
+                                            @csrf
+                                            <button type="submit" 
+                                                class="btn-checkin bg-[#800000] text-white text-[10px] font-black px-6 py-3.5 rounded-xl shadow-lg shadow-red-100 uppercase tracking-widest inline-flex items-center gap-2">
+                                                <i class="fas fa-key-skeleton"></i> Activate Room
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4" class="py-32 text-center">
-                                <div class="flex flex-col items-center">
-                                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                                        <i class="fas fa-calendar-check text-3xl text-gray-200"></i>
-                                    </div>
-                                    <h3 class="text-lg font-bold text-gray-400 uppercase tracking-widest">Clear Schedule</h3>
-                                    <p class="text-gray-300 text-sm italic">Tidak ada tamu yang menunggu check-in saat ini.</p>
-                                </div>
+                            <td colspan="4" class="py-32 text-center text-gray-300">
+                                <i class="fas fa-calendar-check text-4xl mb-4"></i>
+                                <p class="uppercase font-black text-xs tracking-widest">Tidak ada tamu menunggu</p>
                             </td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-
-            <div class="max-w-6xl mx-auto mt-10 flex justify-between items-center opacity-40">
-                <p class="text-[9px] font-black text-gray-500 uppercase tracking-[0.5em]">Hotel SIG Management v2.1</p>
-                <div class="h-px flex-1 mx-8 bg-gray-200"></div>
-                <p class="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em]">Front Office Module</p>
-            </div>
         </div>
     </div>
 
     <script>
-        // FUNGSI BARU: Redirect ke Halaman Pembayaran
+        function showGuestDetail(data) {
+            if (!data) return;
+
+            Swal.fire({
+                title: '<span class="text-xs uppercase tracking-[0.3em] font-black text-gray-400">Complete Reservation Details</span>',
+                width: '600px',
+                html: `
+                    <div class="text-left mt-6 space-y-4 px-2 max-h-[60vh] overflow-y-auto pr-2">
+                        <div class="bg-gray-50 p-5 rounded-[2rem] border border-gray-100">
+                            <p class="text-[9px] font-black text-[#800000] uppercase tracking-widest mb-3">Personal Information</p>
+                            <div class="space-y-2">
+                                <p class="font-black text-gray-900 text-xl tracking-tight">${data.guest_name || 'N/A'}</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-600">ID: ${data.identity_number || '-'}</span>
+                                    <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-600"><i class="fas fa-map-marker-alt mr-1"></i> ${data.place_birth || ''}, ${data.city || ''}</span>
+                                </div>
+                                <p class="text-[11px] font-bold text-gray-400 mt-2 italic"><i class="fas fa-envelope mr-1"></i> ${data.email || '-'} | <i class="fas fa-phone mr-1"></i> ${data.phone || '-'}</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-gray-50 p-5 rounded-[2rem] border border-gray-100">
+                                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Room Details</p>
+                                <p class="text-lg font-black text-gray-800">Room ${data.room ? data.room.room_number : '-'}</p>
+                                <p class="text-[10px] font-bold text-[#800000]">${data.room ? data.room.type : '-'}</p>
+                            </div>
+                            <div class="bg-gray-50 p-5 rounded-[2rem] border border-gray-100">
+                                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Guests</p>
+                                <p class="text-lg font-black text-gray-800">${data.num_guests || 0} Person(s)</p>
+                                <p class="text-[10px] font-bold text-gray-400">Total Capacity</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white border-2 border-dashed border-gray-100 p-5 rounded-[2rem]">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Check In</p>
+                                    <p class="font-bold text-gray-800">${data.arrival_date || '-'}</p>
+                                </div>
+                                <i class="fas fa-long-arrow-alt-right text-gray-200 text-xl"></i>
+                                <div class="text-right">
+                                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Check Out</p>
+                                    <p class="font-bold text-gray-800">${data.departure_date || '-'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-gray-50 p-5 rounded-[2rem] border border-gray-100">
+                                <p class="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-2">Flight / Time</p>
+                                <p class="text-xs font-black text-gray-800">${data.flight_detail || 'No Detail'}</p>
+                            </div>
+                            <div class="bg-gray-50 p-5 rounded-[2rem] border border-gray-100">
+                                <p class="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-2">Pickup Service</p>
+                                <p class="text-xs font-black text-gray-800">${data.pickup_service || '-'}</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-5 rounded-[2rem] border border-gray-100">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <p class="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Payment Method</p>
+                                    <p class="text-xs font-black text-gray-800">${data.payment_method || '-'}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Status</p>
+                                    <p class="text-[10px] font-black uppercase text-gray-800 bg-white px-2 py-1 rounded-lg border border-gray-200">${data.status || '-'}</p>
+                                </div>
+                            </div>
+                            <hr class="border-gray-200/50 mb-3">
+                            <p class="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-1">Remarks / Notes</p>
+                            <p class="text-[11px] font-bold text-amber-900 italic">"${data.remarks || 'No special requests.'}"</p>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#f1f5f9',
+                confirmButtonText: '<i class="fas fa-history mr-2 text-xs"></i> Pindahkan ke History',
+                cancelButtonText: '<span class="text-gray-500 font-bold">Tutup</span>',
+                customClass: {
+                    popup: 'rounded-[3rem] border-none shadow-2xl',
+                    confirmButton: 'rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-widest',
+                    cancelButton: 'rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-widest'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "/reservations/" + data.id + "/history";
+                }
+            });
+        }
+
         function redirectToPayment(id, name) {
             Swal.fire({
                 title: 'Lanjutkan ke Pembayaran?',
-                text: "Tamu " + name + " belum menyelesaikan pembayaran settlement.",
+                text: "Tamu " + name + " membutuhkan settlement pembayaran.",
                 icon: 'info',
                 showCancelButton: true,
                 confirmButtonColor: '#2563eb',
-                cancelButtonColor: '#94a3b8',
-                confirmButtonText: 'Ya, Buka Kasir',
-                cancelButtonText: 'Batal',
+                confirmButtonText: 'Buka Kasir',
                 borderRadius: '20px'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // ARAHKAN KE URL PEMBAYARAN (Sesuaikan dengan route lo)
                     window.location.href = "{{ route('payments.index') }}?reservation_id=" + id;
                 }
             })
         }
 
-        // FUNGSI BARU: Loading state pas klik Activate Room
         function handleCheckin(form) {
             const btn = form.querySelector('button');
             btn.disabled = true;

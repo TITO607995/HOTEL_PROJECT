@@ -58,7 +58,7 @@
                 
                 <a href="{{ route('reservations.index') }}" 
                    class="block p-2 rounded-lg text-[10px] font-bold tracking-widest uppercase transition-colors {{ request()->routeIs('reservations.index') ? 'text-white bg-white/10' : 'text-white/50 hover:text-white hover:bg-white/5' }}">
-                    📝 Monitoring
+                    📝 reservasi
                 </a>
                 <a href="{{ route('reservations.registration') }}" 
                    class="block p-2 rounded-lg text-[10px] font-bold tracking-widest uppercase transition-colors {{ request()->routeIs('reservations.registration') ? 'text-white bg-white/10' : 'text-white/50 hover:text-white hover:bg-white/5' }}">
@@ -85,6 +85,11 @@
            {{ request()->routeIs('about.*') ? 'bg-white/20 font-bold shadow-inner text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
             <span class="text-lg w-6 text-center">ℹ️</span> 
             <span class="text-[11px] font-bold tracking-[0.1em] uppercase">About</span>
+        </a>
+        {{-- MENU BARU: HISTORY --}}
+        <a href="{{ route('reservations.history') }}" 
+           class="block p-2 rounded-lg text-[10px] font-bold tracking-widest uppercase transition-colors {{ request()->routeIs('reservations.history') ? 'text-white bg-white/10' : 'text-white/50 hover:text-white hover:bg-white/5' }}">
+            📜 History Tamu
         </a>
 
         {{-- PEMBATAS SECTION ADMIN --}}

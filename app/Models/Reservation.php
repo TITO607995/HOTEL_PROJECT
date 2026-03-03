@@ -22,7 +22,12 @@ class Reservation extends Model
         'status',
         'place_birth',
         'payment_method',
-        'reservation_type'
+        'reservation_type',
+        'flight_detail',
+        'pickup_service',
+        'remarks',
+        'identity_number', // Tambahan: KTP/Passport
+        'reservation_code', // Tambahan: Kode Unik Reservasi
     ];
 
    public function room()

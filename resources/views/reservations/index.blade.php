@@ -57,13 +57,20 @@
         .glass-card { transition: all 0.3s ease; }
         .glass-card:focus-within { transform: translateY(-4px); }
         
+        /* Custom Radio Status */
+        .status-radio:checked + div {
+            background-color: #800000;
+            color: white;
+            border-color: #800000;
+        }
+
         @media (max-width: 768px) {
-            input, select { font-size: 16px !important; }
+            input, select, textarea { font-size: 16px !important; }
         }
     </style>
 </head>
 
-<body class="antialiased" x-data="{ mobileMenu: false, openModal: false }">
+<body class="antialiased" x-data="{ mobileMenu: false, openModal: false, bookingStatus: '{{ old('status', 'tentative') }}' }">
 
     <div class="bg-white safe-top sticky top-0 z-[50] shadow-sm md:static">
         <x-header></x-header>
@@ -75,13 +82,23 @@
         </aside>
 
         <main class="flex-1 p-4 lg:p-10 pb-32">
+            @if ($errors->any())
+                <div class="max-w-7xl mx-auto mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-2xl">
+                    <ul class="list-disc list-inside text-sm text-red-600 font-bold">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <form id="reservationForm" action="{{ route('reservations.store') }}" method="POST" 
                   class="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start max-w-7xl mx-auto">
                 @csrf
                 
                 <div class="flex-1 space-y-6 w-full">
                     <div class="mb-2 px-2">
-                        <h1 class="text-3xl font-black text-gray-900 tracking-tighter">Reservasi Baru</h1>
+                        <h1 class="text-3xl font-black text-gray-900 tracking-tighter">Reservasi</h1>
                         <p class="text-sm font-bold text-gray-400 uppercase tracking-widest">Sistem Manajemen Kamar</p>
                     </div>
 
@@ -120,9 +137,10 @@
                         <div class="space-y-8 relative z-10">
                             <div class="space-y-3">
                                 <label class="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Pilih Kamar Tersedia</label>
-                                @if ($rooms->where('status', 'available')->count() > 0)
+                                @php $availableRooms = $rooms->where('status', 'available'); @endphp
+                                @if ($availableRooms->count() > 0)
                                     <select name="room_id" class="custom-select w-full bg-gray-50 border-2 border-gray-50 rounded-[1.5rem] p-5 focus:border-[#800000] focus:bg-white transition-all font-bold text-gray-800 cursor-pointer outline-none shadow-inner" required>
-                                        <option value="" disabled selected>— Cari Nomor Kamar —</option>
+                                        <option value="" disabled {{ old('room_id') ? '' : 'selected' }}>— Cari Nomor Kamar —</option>
                                         @foreach($rooms as $room)
                                             @if($room->status == 'available')
                                                 <option value="{{ $room->id }}" {{ old('room_id') == $room->id ? 'selected' : '' }}>
@@ -142,18 +160,41 @@
                                 <div class="space-y-3">
                                     <label class="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Tipe Reservasi</label>
                                     <select name="reservation_type" class="custom-select w-full bg-gray-50 border-2 border-gray-50 rounded-[1.5rem] p-4 font-bold text-gray-700 outline-none focus:border-[#800000] transition-all">
-                                        <option value="non-guaranteed">Non-Guaranteed</option>
-                                        <option value="guaranteed">Guaranteed (DP)</option>
+                                        <option value="non-guaranteed" {{ old('reservation_type') == 'non-guaranteed' ? 'selected' : '' }}>Non-Guaranteed</option>
+                                        <option value="guaranteed" {{ old('reservation_type') == 'guaranteed' ? 'selected' : '' }}>Guaranteed (DP)</option>
                                     </select>
                                 </div>
                                 <div class="space-y-3">
                                     <label class="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Metode Pembayaran</label>
                                     <select name="payment_method" class="custom-select w-full bg-gray-50 border-2 border-gray-50 rounded-[1.5rem] p-4 font-bold text-gray-700 outline-none focus:border-[#800000] transition-all">
-                                        <option value="Cash">Tunai (Cash)</option>
-                                        <option value="Transfer">Bank Transfer</option>
-                                        <option value="Credit Card">Credit Card</option>
+                                        <option value="Cash" {{ old('payment_method') == 'Cash' ? 'selected' : '' }}>Tunai (Cash)</option>
+                                        <option value="Transfer" {{ old('payment_method') == 'Transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                                        <option value="Credit Card" {{ old('payment_method') == 'Credit Card' ? 'selected' : '' }}>Credit Card</option>
                                     </select>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-8 md:p-10 rounded-[3rem] shadow-sm border border-gray-50">
+                        <h3 class="text-xl font-black text-gray-800 mb-8 flex items-center gap-4">
+                            <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
+                                <i class="fas fa-plane-arrival"></i>
+                            </div>
+                            Informasi Kedatangan
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-3">
+                                <label class="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Flight Detail & Time</label>
+                                <input type="text" name="flight_detail" value="{{ old('flight_detail') }}" class="w-full bg-gray-50 border-2 border-gray-50 rounded-[1.5rem] p-4 font-bold text-gray-700 outline-none focus:border-[#800000] focus:bg-white transition-all" placeholder="Contoh: GA-123 / 14:00">
+                            </div>
+                            <div class="space-y-3">
+                                <label class="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Layanan Penjemputan</label>
+                                <select name="pickup_service" class="custom-select w-full bg-gray-50 border-2 border-gray-50 rounded-[1.5rem] p-4 font-bold text-gray-700 outline-none focus:border-[#800000] transition-all">
+                                    <option value="No" {{ old('pickup_service') == 'No' ? 'selected' : '' }}>Tidak Ada</option>
+                                    <option value="Airport" {{ old('pickup_service') == 'Airport' ? 'selected' : '' }}>Airport Pickup</option>
+                                    <option value="Station" {{ old('pickup_service') == 'Station' ? 'selected' : '' }}>Station Pickup</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -174,6 +215,20 @@
                         </div>
 
                         <div class="p-10 space-y-7">
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Status Reservasi</label>
+                                <div class="flex p-1 bg-gray-100 rounded-2xl gap-1">
+                                    <label class="flex-1 relative cursor-pointer group">
+                                        <input type="radio" name="status" value="tentative" class="hidden status-radio" x-model="bookingStatus">
+                                        <div class="text-center py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-transparent text-gray-400 group-hover:text-gray-600">Tentative</div>
+                                    </label>
+                                    <label class="flex-1 relative cursor-pointer group">
+                                        <input type="radio" name="status" value="confirmed" class="hidden status-radio" x-model="bookingStatus">
+                                        <div class="text-center py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-transparent text-gray-400 group-hover:text-gray-600">Confirmed</div>
+                                    </label>
+                                </div>
+                            </div>
+
                             <div class="group">
                                 <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Nama Lengkap Tamu</label>
                                 <input type="text" name="guest_name" value="{{ old('guest_name') }}" 
@@ -182,10 +237,10 @@
                             </div>
 
                             <div class="group">
-                                <label class="text-[10px] font-black text-[#800000] uppercase tracking-widest block mb-1">Tempat & Tanggal Lahir</label>
-                                <input type="text" name="place_birth" value="{{ old('place_birth') }}" 
+                                <label class="text-[10px] font-black text-[#800000] uppercase tracking-widest block mb-1">Nomor KTP / Passport</label>
+                                <input type="text" name="identity_number" value="{{ old('identity_number') }}" 
                                     class="w-full input-underline py-2 font-bold text-gray-800 placeholder-gray-300 italic" 
-                                    placeholder="Contoh: Surabaya, 12-05-1995" required>
+                                    placeholder="3171xxxxxxxxxxxx" required>
                             </div>
 
                             <div class="grid grid-cols-2 gap-6">
@@ -201,16 +256,41 @@
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Email</label>
+                            <div class="group">
+                                <label class="text-[10px] font-black text-[#800000] uppercase tracking-widest block mb-1">Alamat Email</label>
                                 <input type="email" name="email" value="{{ old('email') }}" 
-                                    class="w-full input-underline py-2 font-extrabold text-lg text-gray-800" placeholder="guest@example.com" required>
+                                    class="w-full input-underline py-2 font-bold text-lg text-gray-800 placeholder-gray-300 italic" 
+                                    placeholder="tamu@example.com" required>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="group">
+                                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Negara</label>
+                                    <input type="text" name="country" value="{{ old('country', 'Indonesia') }}" 
+                                        class="w-full input-underline py-2 font-bold text-gray-800" required>
+                                </div>
+                                <div class="group">
+                                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Kota</label>
+                                    <input type="text" name="city" value="{{ old('city') }}" 
+                                        class="w-full input-underline py-2 font-bold text-gray-800" placeholder="Jakarta" required>
+                                </div>
+                            </div>
+                            
+                            <div class="group">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Tempat Lahir</label>
+                                <input type="text" name="place_birth" value="{{ old('place_birth') }}" 
+                                    class="w-full input-underline py-2 font-bold text-gray-800" placeholder="Kota Kelahiran" required>
+                            </div>
+
+                            <div class="group">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Remarks (Catatan)</label>
+                                <textarea name="remarks" rows="2" class="w-full bg-gray-50 border-2 border-gray-50 rounded-2xl p-4 font-bold text-gray-700 outline-none focus:border-[#800000] focus:bg-white transition-all text-sm" placeholder="Contoh: Minta lantai atas, High floor...">{{ old('remarks') }}</textarea>
                             </div>
 
                             <div class="space-y-4 pt-4">
                                 <button type="submit" 
                                     class="w-full bg-[#800000] text-white font-black py-6 rounded-[2rem] shadow-xl shadow-red-900/20 hover:bg-black transition-all duration-500 uppercase tracking-[0.2em] text-[11px] flex items-center justify-center gap-3 active:scale-95">
-                                    <span>Simpan Reservasi</span>
+                                    <span x-text="bookingStatus === 'confirmed' ? 'Finalize & Simpan' : 'Simpan Tentative'"></span>
                                     <i class="fas fa-check-circle text-lg"></i>
                                 </button>
                             </div>
@@ -232,6 +312,10 @@
     <script>
         const form = document.getElementById('reservationForm');
         form.addEventListener('submit', function(e) {
+            if(!form.checkValidity()){
+                return; 
+            }
+
             e.preventDefault();
             Swal.fire({
                 title: 'Konfirmasi Booking',
@@ -262,9 +346,14 @@
             if (this.value) {
                 let nextDay = new Date(this.value);
                 nextDay.setDate(nextDay.getDate() + 1);
-                const formattedDate = nextDay.toISOString().split('T')[0];
+                
+                const yyyy = nextDay.getFullYear();
+                const mm = String(nextDay.getMonth() + 1).padStart(2, '0');
+                const dd = String(nextDay.getDate()).padStart(2, '0');
+                const formattedDate = `${yyyy}-${mm}-${dd}`;
+                
                 departureInput.min = formattedDate;
-                if (departureInput.value < formattedDate) {
+                if (departureInput.value <= this.value) {
                     departureInput.value = formattedDate;
                 }
             }
