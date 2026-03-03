@@ -7,14 +7,18 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <title>Manajemen Role - Hotel SIG</title>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        .table-shadow { box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04); }
     </style>
 </head>
-    <x-header></x-header>
+
 <body class="bg-[#F8F9FA] text-gray-800 antialiased">
+    <x-header></x-header>
 
     <div class="flex min-h-screen">
         <aside class="w-64 fixed inset-y-0 left-0 z-50 shadow-2xl bg-white border-r border-gray-100">
@@ -22,8 +26,6 @@
         </aside>
 
         <main class="flex-1 ml-64 flex flex-col min-h-screen">
-            
-
             <div class="p-8 lg:p-12">
                 
                 {{-- Header Section --}}
@@ -42,34 +44,20 @@
                     </div>
                     
                     <a href="{{ route('roles.create') }}" 
-                       class="bg-[#800000] text-white px-6 py-3.5 rounded-xl font-bold text-xs shadow-xl shadow-red-900/20 hover:bg-red-900 hover:-translate-y-0.5 transition-all flex items-center gap-3 uppercase tracking-widest">
+                       class="bg-[#800000] text-white px-6 py-4 rounded-2xl font-black text-[10px] shadow-xl shadow-red-900/20 hover:bg-red-900 hover:-translate-y-1 transition-all flex items-center gap-3 uppercase tracking-[0.2em]">
                         <i class="fas fa-plus-circle text-sm"></i> Tambah Role Baru
                     </a>
                 </div>
 
-                {{-- Alert Sukses --}}
-                @if(session('success'))
-                <div x-data="{ show: true }" x-show="show" x-transition 
-                     class="mb-8 p-4 bg-green-50 border-l-4 border-green-500 rounded-r-xl shadow-sm flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
-                        <span class="text-sm font-bold text-green-800">{{ session('success') }}</span>
-                    </div>
-                    <button @click="show = false" class="text-green-400 hover:text-green-600">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                @endif
-
                 {{-- Table Card --}}
-                <div class="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm">
+                <div class="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden table-shadow">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left">
+                        <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-50/50">
-                                    <th class="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] w-1/4">Nama Jabatan (Role)</th>
-                                    <th class="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] w-1/2">Izin Akses Menu</th>
-                                    <th class="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">Aksi</th>
+                                    <th class="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Jabatan (Role)</th>
+                                    <th class="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Izin Akses Menu</th>
+                                    <th class="p-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">Konfigurasi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
@@ -80,43 +68,42 @@
                                             <span class="font-black text-gray-800 text-sm uppercase tracking-tight group-hover:text-[#800000] transition-colors">
                                                 {{ $role->name }}
                                             </span>
-                                            <span class="text-[10px] text-gray-400 font-medium">ID Privilege: #00{{ $role->id }}</span>
+                                            <span class="text-[10px] text-gray-300 font-bold uppercase tracking-widest mt-1 italic">Level #{{ $role->id }}</span>
                                         </div>
                                     </td>
                                     <td class="p-6">
-                                        <div class="flex flex-wrap gap-1.5">
+                                        <div class="flex flex-wrap gap-2">
                                             @forelse($role->menus as $menu)
-                                                <span class="inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-bold bg-gray-50 text-gray-600 border border-gray-200 group-hover:border-[#800000]/20 group-hover:text-[#800000] transition-all">
-                                                    <i class="fas fa-check-circle mr-1.5 text-[8px] opacity-50"></i>
-                                                    {{ strtoupper($menu->name) }}
+                                                <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tighter bg-white border border-gray-100 shadow-sm text-gray-500 group-hover:border-[#800000]/20 transition-all">
+                                                    <i class="fas fa-circle text-[4px] mr-2 text-[#800000]"></i>
+                                                    {{ $menu->name }}
                                                 </span>
                                             @empty
-                                                <span class="text-[10px] text-gray-400 font-medium italic bg-gray-50 px-3 py-1 rounded-lg">
-                                                    <i class="fas fa-ban mr-1"></i> Belum ada izin menu
+                                                <span class="text-[10px] text-gray-300 font-bold italic tracking-widest bg-gray-50 px-4 py-2 rounded-xl border border-dashed border-gray-200">
+                                                    <i class="fas fa-ban mr-1"></i> No Permissions
                                                 </span>
                                             @endforelse
                                         </div>
                                     </td>
                                     <td class="p-6">
-                                        <div class="flex justify-center gap-3">
+                                        <div class="flex justify-center gap-2">
                                             @if($role->name !== 'Superadmin')
                                                 <a href="{{ route('roles.edit', $role->id) }}" 
-                                                   class="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                                                    <i class="fas fa-user-gear mr-1.5"></i> Edit Akses
+                                                   class="bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-[#800000] hover:text-white hover:border-[#800000] transition-all shadow-sm">
+                                                    <i class="fas fa-pen-nib mr-1"></i> Edit
                                                 </a>
 
-                                                <form action="{{ route('roles.destroy', $role->id) }}" method="POST" onsubmit="return confirm('Hapus role ini? User dengan role ini mungkin kehilangan akses.')">
+                                                <form id="delete-form-{{ $role->id }}" action="{{ route('roles.destroy', $role->id) }}" method="POST" class="inline">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" 
-                                                            class="bg-gray-50 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-sm">
-                                                        <i class="fas fa-trash-alt"></i>
+                                                    <button type="button" onclick="confirmDelete('{{ $role->id }}', '{{ $role->name }}')"
+                                                            class="bg-gray-50 text-gray-400 px-4 py-2.5 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm">
+                                                        <i class="fas fa-trash-alt text-[10px]"></i>
                                                     </button>
                                                 </form>
                                             @else
-                                                <div class="flex items-center gap-2 bg-red-50 border border-red-100 px-4 py-2 rounded-xl">
-                                                    <i class="fas fa-lock text-red-600 text-xs"></i>
-                                                    <span class="text-[10px] font-black text-red-700 uppercase tracking-tighter">Full Access Locked</span>
+                                                <div class="flex items-center gap-2 px-4 py-2.5 bg-red-50/50 border border-red-100 rounded-xl text-[9px] font-black text-red-700 uppercase tracking-widest">
+                                                    <i class="fas fa-crown"></i> Master Access
                                                 </div>
                                             @endif
                                         </div>
@@ -129,12 +116,58 @@
                 </div>
 
                 {{-- Footer Info --}}
-                <footer class="mt-12 text-center">
-                    <p class="text-[10px] font-black text-gray-300 uppercase tracking-[0.5em]">RBAC System • Hotel SIG Security Protocol</p>
+                <footer class="mt-12 flex justify-between items-center px-6">
+                    <p class="text-[10px] font-black text-gray-300 uppercase tracking-[0.5em]">RBAC System • Hotel SIG v2.0</p>
+                    <div class="flex items-center gap-2 text-gray-300">
+                        <i class="fas fa-fingerprint text-sm opacity-20"></i>
+                    </div>
                 </footer>
             </div>
         </main>
     </div>
 
+    <script>
+        // SweetAlert2 Konfirmasi Hapus
+        function confirmDelete(id, name) {
+            Swal.fire({
+                title: 'HAPUS ROLE?',
+                html: `Apakah Anda yakin ingin menghapus role <b class="text-[#800000]">${name}</b>? <br> <small class="text-gray-400">Tindakan ini tidak dapat dibatalkan.</small>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#800000',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'YA, HAPUS!',
+                cancelButtonText: 'BATAL',
+                reverseButtons: true,
+                background: '#ffffff',
+                customClass: {
+                    popup: 'rounded-[2rem] border border-gray-100',
+                    confirmButton: 'rounded-xl px-6 py-3 font-bold text-xs uppercase tracking-widest',
+                    cancelButton: 'rounded-xl px-6 py-3 font-bold text-xs uppercase tracking-widest'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('delete-form-' + id).submit();
+                }
+            })
+        }
+
+        // Notifikasi Sukses dari Session
+        @if(session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'BERHASIL!',
+                text: "{{ session('success') }}",
+                showConfirmButton: false,
+                timer: 2500,
+                iconColor: '#800000',
+                background: '#ffffff',
+                customClass: {
+                    popup: 'rounded-[2rem] border border-gray-100 shadow-2xl',
+                    title: 'text-sm font-black tracking-widest text-gray-800'
+                }
+            });
+        @endif
+    </script>
 </body>
 </html>

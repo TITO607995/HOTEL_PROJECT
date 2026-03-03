@@ -68,9 +68,12 @@
                         <button onclick="window.print()" class="group flex items-center gap-2 bg-white border border-gray-200 text-gray-600 px-5 py-2.5 rounded-2xl font-bold text-xs hover:bg-gray-50 hover:border-[#800000] hover:text-[#800000] transition-all shadow-sm">
                             <i class="fas fa-print group-hover:scale-110 transition-transform"></i> Cetak Laporan
                         </button>
-                        <button class="group flex items-center gap-2 bg-[#800000] text-white px-6 py-2.5 rounded-2xl font-bold text-xs hover:bg-red-900 transition-all shadow-lg shadow-red-900/20 active:scale-95">
-                            <i class="fas fa-file-excel group-hover:bounce transition-transform"></i> Ekspor Excel
-                        </button>
+                       {{-- Tombol Ekspor Excel --}}
+                    <a href="{{ route('transactions.export') }}" 
+                    class="group flex items-center gap-2 bg-[#800000] text-white px-6 py-2.5 rounded-2xl font-bold text-xs hover:bg-red-900 transition-all shadow-lg shadow-red-900/20 active:scale-95">
+                        <i class="fas fa-file-excel group-hover:bounce transition-transform"></i> 
+                        Ekspor Excel
+                    </a>    
                     </div>
                 </div>
 

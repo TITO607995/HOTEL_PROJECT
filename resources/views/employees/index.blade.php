@@ -8,14 +8,39 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <title>Manajemen Karyawan - Hotel SIG</title>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .table-shadow { box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04); }
+        
+        /* Custom SweetAlert Style agar sesuai tema Hotel SIG */
+        .swal2-popup {
+            border-radius: 2rem !important;
+            padding: 2rem !important;
+        }
+        .swal2-styled.swal2-confirm {
+            background-color: #800000 !important;
+            border-radius: 0.75rem !important;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            font-size: 0.75rem !important;
+        }
+        .swal2-styled.swal2-cancel {
+            border-radius: 0.75rem !important;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            font-size: 0.75rem !important;
+        }
     </style>
 </head>
-   <x-header></x-header>
+
 <body class="bg-[#F8F9FA] text-gray-800 antialiased">
+    <x-header></x-header>
 
     <div class="flex min-h-screen">
         <aside class="w-64 fixed inset-y-0 left-0 z-50 shadow-2xl bg-white border-r border-gray-100">
@@ -23,7 +48,6 @@
         </aside>
 
         <main class="flex-1 ml-64 flex flex-col min-h-screen">
-            
             <div class="p-8 lg:p-12">
                 
                 {{-- Header Section --}}
@@ -36,7 +60,6 @@
                     </div>
                     
                     <div class="flex items-center gap-4">
-                        {{-- Search Bar --}}
                         <div class="relative hidden sm:block">
                             <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 text-xs"></i>
                             <input type="text" placeholder="Cari nama atau email..." 
@@ -49,20 +72,6 @@
                         </a>
                     </div>
                 </div>
-
-                {{-- Alert Success --}}
-                @if(session('success'))
-                <div x-data="{ show: true }" x-show="show" x-transition 
-                     class="mb-8 p-4 bg-green-50 border-l-4 border-green-500 rounded-r-xl shadow-sm flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
-                        <span class="text-sm font-bold text-green-800">{{ session('success') }}</span>
-                    </div>
-                    <button @click="show = false" class="text-green-400 hover:text-green-600">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                @endif
 
                 {{-- Table Card --}}
                 <div class="bg-white rounded-[2rem] border border-gray-100 overflow-hidden table-shadow">
@@ -114,11 +123,11 @@
 
                                             {{-- Delete --}}
                                             @if(auth()->id() !== $employee->id)
-                                            <form action="{{ route('employees.destroy', $employee->id) }}" method="POST" 
-                                                  onsubmit="return confirm('Apakah Anda yakin ingin menghapus akses karyawan ini?')">
+                                            <form id="delete-form-{{ $employee->id }}" action="{{ route('employees.destroy', $employee->id) }}" method="POST" class="inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" 
+                                                <button type="button" 
+                                                        onclick="confirmDelete('{{ $employee->id }}', '{{ $employee->name }}')"
                                                         class="w-9 h-9 flex items-center justify-center bg-gray-50 text-gray-400 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm"
                                                         title="Hapus Akses">
                                                     <i class="fas fa-trash-can text-xs"></i>
@@ -147,7 +156,6 @@
                     </div>
                 </div>
 
-                {{-- Footer Info --}}
                 <div class="mt-8 flex justify-between items-center px-4">
                     <p class="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">Total Karyawan: {{ $employees->count() }}</p>
                     <div class="flex gap-2 text-xs font-bold text-gray-400">
@@ -157,6 +165,41 @@
             </div>
         </main>
     </div>
+
+    {{-- Script SweetAlert Logic --}}
+    <script>
+        // 1. Notifikasi Sukses (Untuk Create & Update)
+        @if(session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'BERHASIL',
+                text: "{{ session('success') }}",
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                iconColor: '#800000',
+            });
+        @endif
+
+        // 2. Konfirmasi Hapus
+        function confirmDelete(id, name) {
+            Swal.fire({
+                title: 'HAPUS AKSES?',
+                html: `Anda akan menghapus data karyawan <br><b class="text-[#800000]">${name}</b>. <br>Tindakan ini tidak dapat dibatalkan!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'YA, HAPUS DATA',
+                cancelButtonText: 'BATAL',
+                reverseButtons: true,
+                focusCancel: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Submit form terkait
+                    document.getElementById('delete-form-' + id).submit();
+                }
+            });
+        }
+    </script>
 
 </body>
 </html>

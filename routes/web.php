@@ -18,27 +18,17 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
 /*
 |--------------------------------------------------------------------------
-| REDIRECT AWAL
+| REDIRECT AWAL & AUTH
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-/*
-|--------------------------------------------------------------------------
-| LOGIN (RATE LIMIT)
-|--------------------------------------------------------------------------
-*/
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])
     ->middleware('throttle:login')
     ->name('login');
 
-/*
-|--------------------------------------------------------------------------
-| ROUTE AUTH (BREEZE / FORTIFY)
-|--------------------------------------------------------------------------
-*/
 require __DIR__.'/auth.php';
 
 /*
@@ -51,11 +41,14 @@ Route::middleware(['auth'])->group(function () {
     // DASHBOARD
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    Route::get('/about', function () {
+        return view('about.about');
+    })->name('about.about');
+
     // ROOMS
     Route::prefix('rooms')->group(function () {
         Route::get('/', [RoomController::class, 'index'])->name('rooms.index');
         Route::post('/store', [RoomController::class, 'store'])->name('rooms.store');
-
         Route::get('/maintenance', [RoomController::class, 'maintenancePage'])->name('rooms.maintenance');
         Route::post('/maintenance/{id}/update', [RoomController::class, 'updateMaintenance'])->name('rooms.maintenance.update');
     });
@@ -75,10 +68,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/tambah', [ReservationController::class, 'create'])->name('reservations.create');
         Route::post('/simpan', [ReservationController::class, 'store'])->name('reservations.store');
         Route::post('/perpanjang/{id}', [ReservationController::class, 'extend'])->name('reservations.extend');
-
         Route::get('/registration', [ReservationController::class, 'registration'])->name('reservations.registration');
         Route::post('/checkin/{id}', [ReservationController::class, 'checkin'])->name('reservations.checkin');
-
         Route::get('/check-out', [ReservationController::class, 'checkoutPage'])->name('reservations.checkout.page');
         Route::get('/check-out/{id}', [ReservationController::class, 'checkout'])->name('reservations.checkout');
         Route::post('/check-out/{id}/process', [ReservationController::class, 'processCheckout'])->name('reservations.process-checkout');
@@ -91,11 +82,18 @@ Route::middleware(['auth'])->group(function () {
     // PAYMENT & TRANSACTION
     Route::get('/pembayaran', [PaymentController::class, 'index'])->name('payments.index');
     Route::post('/pembayaran/store', [PaymentController::class, 'store'])->name('payments.store');
-    Route::delete('/transactions/bulk-delete', [TransactionController::class, 'bulkDelete'])->name('transactions.bulkDelete');
 
-    // REPORT
+    // KEUANGAN (TRANSACTION)
+    Route::prefix('transactions')->group(function () {
+        Route::get('/export', [TransactionController::class, 'exportExcel'])->name('transactions.export');
+        Route::delete('/bulk-delete', [TransactionController::class, 'bulkDelete'])->name('transactions.bulkDelete');
+        Route::delete('/{id}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
+    });
+
+    // REPORTS
     Route::get('/reports/operasional', [ReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/keuangan', [ReportController::class, 'financial'])->name('reports.financial');
+    // Diarahkan ke TransactionController agar sinkron dengan fungsi hapus/ekspor
+    Route::get('/reports/keuangan', [TransactionController::class, 'index'])->name('reports.financial');
 
     // PROFILE
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -106,10 +104,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/devices-monitor', [DeviceController::class, 'index'])->name('admin.devices');
     Route::delete('/devices-monitor/{id}', [DeviceController::class, 'logoutDevice'])->name('admin.devices.logout');
 
-    // FIX DATA
+    // UTILITY / FIX
     Route::get('/fix-data', function () {
         \App\Models\Reservation::whereNull('status')->update(['status' => 'booked']);
         return 'Data berhasil diperbaiki';
     });
-
 });
