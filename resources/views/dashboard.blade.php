@@ -127,17 +127,37 @@
                                 <td class="px-6 py-6 font-black text-gray-800 text-lg group-hover:text-[#800000]">{{ $room['no'] }}</td>
                                 <td class="px-6 py-6 italic font-bold text-gray-600 text-sm">{{ $room['left_status'] }}</td>
                                 <td class="px-6 py-6 text-sm font-bold">{{ $room['payment'] }}</td>
+                                
                                 <td class="px-6 py-6 text-center">
-                                    <i class="fas {{ $room['is_paid'] ? 'fa-check text-green-500' : 'fa-exclamation text-red-500 animate-pulse' }}"></i>
+                                    <div class="flex justify-center">
+                                        {{-- LOGIKA STATUS BAYAR --}}
+                                        @if($room['is_paid'])
+                                            <div class="w-9 h-9 rounded-xl bg-green-50 text-green-500 flex items-center justify-center border border-green-100 shadow-sm" title="Sudah Bayar">
+                                                <i class="fas fa-check text-sm"></i>
+                                            </div>
+                                        @else
+                                            <div class="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 shadow-sm animate-pulse" title="Belum Bayar">
+                                                <i class="fas fa-times text-sm"></i>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </td>
+
                                 <td class="px-6 py-6 text-center">
-                                    <span class="px-4 py-1.5 rounded-full {{ $room['action_color'] }} text-white text-[9px] font-black uppercase tracking-widest">
+                                    <span class="px-4 py-1.5 rounded-full {{ $room['action_color'] }} text-white text-[9px] font-black uppercase tracking-widest shadow-sm">
                                         {{ $room['action'] }}
                                     </span>
                                 </td>
                             </tr>
                             @empty
-                            <tr><td colspan="5" class="py-20 text-center opacity-30 font-bold uppercase tracking-widest text-xs">Kosong</td></tr>
+                            <tr>
+                                <td colspan="5" class="py-20 text-center">
+                                    <div class="flex flex-col items-center opacity-20">
+                                        <i class="fas fa-bed text-4xl mb-3"></i>
+                                        <p class="font-bold uppercase tracking-widest text-xs text-gray-400">Semua Kamar Kosong</p>
+                                    </div>
+                                </td>
+                            </tr>
                             @endforelse
                         </tbody>
                     </table>

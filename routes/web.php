@@ -109,4 +109,5 @@ Route::middleware(['auth'])->group(function () {
         \App\Models\Reservation::whereNull('status')->update(['status' => 'booked']);
         return 'Data berhasil diperbaiki';
     });
+    Route::delete('/guests/bulk-delete', [GuestController::class, 'bulkDelete'])->name('guests.bulk-delete');
 });

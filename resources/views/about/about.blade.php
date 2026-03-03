@@ -122,7 +122,7 @@
                             <div class="w-24 h-24 bg-[#800000] rounded-full mx-auto mb-6 flex items-center justify-center text-white text-3xl font-black shadow-lg">T</div>
                             <h4 class="font-black text-gray-900 text-sm uppercase">Tito</h4>
                             <p class="text-[9px] font-black text-[#800000] uppercase tracking-widest mb-4 italic leading-tight">Backend Specialist & <br>Database Architect</p>
-                            <p class="text-[10px] text-gray-400 font-medium">Merancang skema database relasional dan logika bisnis transaksi.</p>
+                            <p class="text-[10px] text-gray-400 font-medium">Merancang skema database relasional dan logika bisnis transaksi, Jago Problem Solving Dalam memecahkan Masalah</p>
                         </div>
 
                         {{-- Maul --}}
@@ -177,7 +177,7 @@
                                         </div>
                                         <div>
                                             <p class="text-[10px] font-black uppercase tracking-widest text-red-300">Business Inquiry</p>
-                                            <p class="text-lg font-bold">engineering@hotel-sig.sch.id</p>
+                                            <p class="text-lg font-bold">Mollskuy@hotel-sig.sch.id</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-6 group cursor-pointer">
