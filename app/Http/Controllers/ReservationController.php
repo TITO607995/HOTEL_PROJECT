@@ -194,4 +194,27 @@ class ReservationController extends Controller
 
             return redirect()->route('reservations.index')->with('success', 'Data berhasil dipindahkan ke history');
         }
+
+    // 10. PROSES CANCEL RESERVASI (BARU)
+    public function cancel(Request $request, $id)
+    {
+        $reservation = Reservation::findOrFail($id);
+
+        DB::transaction(function () use ($reservation, $request) {
+            // 1. Simpan alasan cancel ke dalam kolom remarks
+            $alasan = $request->cancel_reason ?? 'Tidak ada alasan spesifik';
+            $remarksBaru = $reservation->remarks . " | [CANCEL REASON: " . $alasan . "]";
+
+            // 2. Update status reservasi menjadi 'archived' agar masuk ke History
+            $reservation->update([
+                'status'  => 'archived',
+                'remarks' => $remarksBaru
+            ]);
+
+            // 3. Kembalikan status kamar menjadi 'available' agar bisa dipesan orang lain
+            $reservation->room->update(['status' => 'available']);
+        });
+
+        return redirect()->route('reservations.registration')->with('success', 'Reservasi ' . $reservation->guest_name . ' berhasil dibatalkan.');
+    }
 }

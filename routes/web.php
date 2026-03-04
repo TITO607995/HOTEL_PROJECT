@@ -114,3 +114,5 @@ Route::middleware(['auth'])->group(function () {
     // Tambahkan ini di routes/web.php
 Route::get('/reservations/{id}/history', [ReservationController::class, 'moveToHistory'])->name('reservations.moveToHistory');
     });
+
+    Route::post('/reservations/{id}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
