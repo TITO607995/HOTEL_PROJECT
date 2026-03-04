@@ -6,7 +6,6 @@
     <title>Login - Perhotelan SMKSIG</title>
     
     <script>
-        // Pencegahan dini sebelum Alpine.js load
         (function() {
             const lockUntil = localStorage.getItem('login_lock_until');
             const now = Math.floor(Date.now() / 1000);
@@ -28,25 +27,15 @@
         .modern-curve { border-bottom-right-radius: 180px; border-top-right-radius: 40px; }
         .input-focus:focus { box-shadow: 0 0 0 4px rgba(139, 0, 0, 0.1); border-color: #8B0000; }
         
-        /* CSS HARD FREEZE - KURSOR DILARANG & INPUT MATI */
-        .system-locked, .system-locked * {
-            cursor: not-allowed !important; /* Kursor jadi tanda dilarang di seluruh layar */
-        }
-
+        .system-locked, .system-locked * { cursor: not-allowed !important; }
         .system-locked .freeze-field {
-            pointer-events: none !important; /* Gak bisa diklik/disentuh */
+            pointer-events: none !important;
             user-select: none !important; 
             background-color: #f3f4f6 !important;
             color: #9ca3af !important;
             opacity: 0.6;
         }
-
-        .system-locked .btn-login-main {
-            filter: grayscale(1);
-            opacity: 0.5;
-            pointer-events: none !important;
-        }
-
+        .system-locked .btn-login-main { filter: grayscale(1); opacity: 0.5; pointer-events: none !important; }
         [x-cloak] { display: none !important; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
@@ -58,15 +47,20 @@
 @php
     use Illuminate\Support\Facades\RateLimiter;
     $ip = request()->ip();
-    // Cek sisa detik dari berbagai kemungkinan key Laravel
-    $secondsLeft = RateLimiter::availableIn('login:'.$ip) 
-                   ?: RateLimiter::availableIn($ip) 
-                   ?: 0;
+    $sessionKey = session('last_throttle_key');
+    
+    // Ambil sisa waktu dari key spesifik (email|ip) atau fallback ke IP
+    $secondsLeft = 0;
+    if ($sessionKey) {
+        $secondsLeft = RateLimiter::availableIn($sessionKey);
+    }
+    if ($secondsLeft <= 0) {
+        $secondsLeft = RateLimiter::availableIn($ip) ?: 0;
+    }
 @endphp
 
 <body class="antialiased overflow-hidden">
 
-    {{-- Alert Floating --}}
     <div x-show="isLimited" x-transition x-cloak class="fixed top-5 right-5 z-50">
         <div class="bg-red-50 border-l-4 border-red-600 p-4 shadow-lg rounded-r-xl flex items-center gap-3">
             <i class="fas fa-snowflake text-blue-500 animate-pulse text-xl"></i>
@@ -78,7 +72,6 @@
     </div>
 
     <div class="flex min-h-screen">
-        {{-- Sisi Kiri (Desktop Only) --}}
         <div class="hidden lg:flex lg:w-1/2 bg-gradient-maroon relative items-center justify-center p-16 modern-curve shadow-2xl">
             <div class="absolute top-10 left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
             <div class="relative z-10 text-center animate-fade">
@@ -90,23 +83,24 @@
             </div>
         </div>
 
-        {{-- Sisi Kanan (Form) --}}
         <div class="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
             <div class="w-full max-w-md animate-fade">
-                
                 <div class="flex justify-center items-center gap-6 mb-12">
-                    <img src="{{ asset('image/logoph.png') }}" alt="Logo PH" class="w-16 h-16 rounded-full border-2 border-gray-100 shadow-sm">
+                    <img src="{{ asset('image/logoph.png') }}" class="w-16 h-16 rounded-full border-2 border-gray-100 shadow-sm">
                     <div class="w-px h-10 bg-gray-200"></div>
-                    <img src="{{ asset('image/smksig.png') }}" alt="Logo SIG" class="w-16 h-16 rounded-full border-2 border-gray-100 shadow-sm">
+                    <img src="{{ asset('image/smksig.png') }}" class="w-16 h-16 rounded-full border-2 border-gray-100 shadow-sm">
                 </div>
 
                 <div class="text-center lg:text-left mb-10">
-                    <h2 class="text-3xl font-black text-gray-900 tracking-tight">Selamat Datang</h2>
-                    <p class="text-gray-500 mt-3 font-medium text-sm italic border-l-2 border-red-600 pl-3 uppercase tracking-widest">Authorized Personnel Only</p>
+                    <h2 class="text-3xl font-black text-gray-900 tracking-tight">LOGIN PAGE SIMP</h2>
+                    <p class="text-gray-500 mt-3 font-medium text-sm italic border-l-2 border-red-600 pl-3 uppercase tracking-widest">Selamat Datang Di SIMP</p>
                 </div>
 
                 <form method="POST" action="{{ route('login') }}" class="space-y-6" @submit="handleSubmit($event)">
                     @csrf
+                    <div class="hidden" aria-hidden="true">
+                        <input type="text" name="my_security_field" x-model="hp_field" tabindex="-1" autocomplete="off">
+                    </div>
 
                     <div class="space-y-2">
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
@@ -116,10 +110,8 @@
                             </span>
                             <input type="email" name="email" id="email" value="{{ old('email') }}" required 
                                 :disabled="isLimited"
-                                :readonly="isLimited"
                                 class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none transition-all input-focus text-gray-800 font-semibold shadow-sm"
-                                :class="isLimited ? 'freeze-field' : ''"
-                                placeholder="Email terdaftar">
+                                :class="isLimited ? 'freeze-field' : ''" placeholder="Email terdaftar">
                         </div>
                     </div>
 
@@ -131,24 +123,21 @@
                             </span>
                             <input type="password" name="password" id="password" required
                                 :disabled="isLimited"
-                                :readonly="isLimited"
                                 class="w-full pl-12 pr-12 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none transition-all input-focus text-gray-800 font-semibold shadow-sm"
-                                :class="isLimited ? 'freeze-field' : ''"
-                                placeholder="••••••••">
+                                :class="isLimited ? 'freeze-field' : ''" placeholder="••••••••">
                             <button type="button" x-show="!isLimited" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400">
                                 <i class="fas fa-eye" id="eye-icon"></i>
                             </button>
                         </div>
                     </div>
 
-                    {{-- Timer Progress --}}
                     <div x-show="isLimited" x-cloak class="space-y-2 animate-fade">
                         <div class="flex justify-between text-[10px] font-bold text-red-600 uppercase">
                             <span>Akses Dibekukan...</span>
                             <span x-text="seconds + 's'"></span>
                         </div>
                         <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                            <div class="bg-red-600 h-full transition-all duration-1000 ease-linear shadow-[0_0_10px_rgba(220,38,38,0.5)]"
+                            <div class="bg-red-600 h-full transition-all duration-1000 ease-linear"
                                  :style="`width: ${(seconds / maxSeconds) * 100}%` "></div>
                         </div>
                     </div>
@@ -185,9 +174,10 @@
                 seconds: 0,
                 maxSeconds: 60,
                 shakeTrigger: false,
+                hp_field: '',
 
                 init() {
-                    let serverSeconds = {{ $secondsLeft ?? 0 }};
+                    let serverSeconds = {{ $secondsLeft }};
                     let localLock = localStorage.getItem('login_lock_until');
                     let now = Math.floor(Date.now() / 1000);
                     let localSeconds = localLock ? (parseInt(localLock) - now) : 0;
@@ -203,22 +193,9 @@
                 lockSystem() {
                     this.isLimited = true;
                     this.maxSeconds = Math.max(this.seconds, 60);
-                    
-                    // Tambahkan class global ke HTML
                     document.documentElement.classList.add('system-locked');
-                    
-                    // Simpan ke localStorage agar awet meski di-refresh
                     const lockUntil = Math.floor(Date.now() / 1000) + this.seconds;
                     localStorage.setItem('login_lock_until', lockUntil);
-
-                    // PAKSA LEPAS KURSOR dari semua input (Anti-Typing)
-                    this.$nextTick(() => {
-                        const inputs = document.querySelectorAll('input');
-                        inputs.forEach(input => {
-                            input.blur(); 
-                            if(this.seconds > 5) input.value = ""; // Kosongkan jika limit masih lama
-                        });
-                    });
                 },
 
                 startTimer() {
@@ -234,7 +211,7 @@
                 },
 
                 handleSubmit(e) {
-                    if (this.isLimited) {
+                    if (this.hp_field !== '' || this.isLimited) {
                         e.preventDefault();
                         this.shakeTrigger = true;
                         setTimeout(() => this.shakeTrigger = false, 500);
@@ -253,19 +230,15 @@
             icon.classList.toggle('fa-eye-slash');
         }
 
-        // Tangkap Error 429 dari Laravel
         @if ($errors->any())
             Swal.fire({
                 icon: 'error',
                 title: 'AKSES DITOLAK',
                 text: '{{ $errors->first() }}',
                 confirmButtonColor: '#8B0000',
-                customClass: {
-                    popup: 'rounded-[2rem]',
-                    confirmButton: 'rounded-xl px-10 py-3 font-bold'
-                }
+                customClass: { popup: 'rounded-[2rem]', confirmButton: 'rounded-xl px-10 py-3 font-bold' }
             });
         @endif
     </script>
 </body>
-</html>
+</html> 

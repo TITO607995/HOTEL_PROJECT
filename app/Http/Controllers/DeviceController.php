@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\BlacklistIp; // Import Model Blacklist
 
 class DeviceController extends Controller
 {
@@ -31,7 +32,7 @@ class DeviceController extends Controller
                 
                 // Key ini yang dicari oleh Blade kamu:
                 'device_type'   => $this->getDeviceType($agent),
-                'platform'      => $this->getPlatform($agent), // Ini dia yang bikin error tadi!
+                'platform'      => $this->getPlatform($agent), 
                 'browser'       => $this->getBrowser($agent),
             ];
         });
@@ -68,5 +69,45 @@ class DeviceController extends Controller
     private function getDeviceType($agent) {
         if (preg_match('/mobile|android|iphone|ipad/i', $agent)) return '📱 Mobile';
         return '💻 Desktop';
+    }
+
+    public function blockIp(Request $request)
+    {
+        $request->validate(['ip_address' => 'required|ip']);
+
+        // Simpan ke tabel blacklist
+        BlacklistIp::firstOrCreate([
+            'ip_address' => $request->ip_address
+        ], [
+            'reason' => 'Blocked via Security Monitor'
+        ]);
+
+        // Opsional: Hapus semua session dengan IP ini agar langsung terpental
+        DB::table('sessions')->where('ip_address', $request->ip_address)->delete();
+
+        return back()->with('success', "IP {$request->ip_address} telah masuk daftar hitam!");
+    }
+
+    // --- TAMBAHAN BARU UNTUK HALAMAN BLACKLIST ---
+
+    /**
+     * Menampilkan daftar IP yang kena blokir
+     */
+    public function blacklist()
+    {
+        $blacklisted = BlacklistIp::orderBy('created_at', 'desc')->get();
+        return view('admin.blacklist', compact('blacklisted'));
+    }
+
+    /**
+     * Menghapus IP dari daftar blokir (Unblock)
+     */
+    public function unblockIp($id)
+    {
+        $ip = BlacklistIp::findOrFail($id);
+        $ipAddress = $ip->ip_address;
+        $ip->delete();
+
+        return back()->with('success', "Akses untuk IP {$ipAddress} telah dipulihkan!");
     }
 }

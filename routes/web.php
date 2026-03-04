@@ -10,42 +10,41 @@ use App\Http\Controllers\{
     ReportController,
     TransactionController,
     PaymentController,
-    GuestController,
     DashboardController,
     DeviceController
 };
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\LoginController;
 
 /*
 |--------------------------------------------------------------------------
-| REDIRECT AWAL & AUTH
+| PUBLIC ROUTES & AUTH
 |--------------------------------------------------------------------------
 */
+
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::post('/login', [AuthenticatedSessionController::class, 'store'])
-    ->middleware('throttle:login')
-    ->name('login');
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 
 require __DIR__.'/auth.php';
 
 /*
 |--------------------------------------------------------------------------
-| ROUTE YANG WAJIB LOGIN
+| PROTECTED ROUTES (MUST LOGIN)
 |--------------------------------------------------------------------------
 */
+
 Route::middleware(['auth'])->group(function () {
 
-    // DASHBOARD
+    // --- CORE SYSTEM ---
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
     Route::get('/about', function () {
         return view('about.about');
     })->name('about.about');
 
-    // ROOMS
+    // --- ROOM MANAGEMENT ---
     Route::prefix('rooms')->group(function () {
         Route::get('/', [RoomController::class, 'index'])->name('rooms.index');
         Route::post('/store', [RoomController::class, 'store'])->name('rooms.store');
@@ -53,16 +52,16 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/maintenance/{id}/update', [RoomController::class, 'updateMaintenance'])->name('rooms.maintenance.update');
     });
 
-    // GUESTS
+    // --- GUEST MANAGEMENT ---
     Route::prefix('guests')->group(function () {
         Route::get('/', [ReservationController::class, 'guestIndex'])->name('guests.index');
-        Route::delete('/bulk-delete', [ReservationController::class, 'bulkDelete'])->name('guests.bulk-delete');
-        Route::post('/incognito/{id}', [ReservationController::class, 'toggleIncognito'])->name('guests.toggle-incognito');
         Route::put('/{id}', [ReservationController::class, 'updateGuest'])->name('guests.update');
+        Route::delete('/bulk-delete', [ReservationController::class, 'bulkDelete'])->name('guests.bulk-delete');
         Route::delete('/{id}', [ReservationController::class, 'destroyGuest'])->name('guests.destroy');
+        Route::post('/incognito/{id}', [ReservationController::class, 'toggleIncognito'])->name('guests.toggle-incognito');
     });
 
-    // RESERVASI
+    // --- RESERVATION SYSTEM ---
     Route::prefix('reservasi')->group(function () {
         Route::get('/', [ReservationController::class, 'index'])->name('reservations.index');
         Route::get('/tambah', [ReservationController::class, 'create'])->name('reservations.create');
@@ -73,46 +72,50 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/check-out', [ReservationController::class, 'checkoutPage'])->name('reservations.checkout.page');
         Route::get('/check-out/{id}', [ReservationController::class, 'checkout'])->name('reservations.checkout');
         Route::post('/check-out/{id}/process', [ReservationController::class, 'processCheckout'])->name('reservations.process-checkout');
+        Route::post('/{id}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
+        Route::get('/history', [ReservationController::class, 'history'])->name('reservations.history');
+        Route::get('/{id}/history', [ReservationController::class, 'moveToHistory'])->name('reservations.moveToHistory');
     });
 
-    // EMPLOYEE & ROLE
+    // --- HR & ACCESS CONTROL ---
     Route::resource('employees', EmployeeController::class);
     Route::resource('roles', RoleController::class);
 
-    // PAYMENT & TRANSACTION
+    // --- FINANCE & REPORTS ---
     Route::get('/pembayaran', [PaymentController::class, 'index'])->name('payments.index');
     Route::post('/pembayaran/store', [PaymentController::class, 'store'])->name('payments.store');
 
-    // KEUANGAN (TRANSACTION)
     Route::prefix('transactions')->group(function () {
         Route::get('/export', [TransactionController::class, 'exportExcel'])->name('transactions.export');
         Route::delete('/bulk-delete', [TransactionController::class, 'bulkDelete'])->name('transactions.bulkDelete');
         Route::delete('/{id}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
     });
 
-    // REPORTS
     Route::get('/reports/operasional', [ReportController::class, 'index'])->name('reports.index');
-    // Diarahkan ke TransactionController agar sinkron dengan fungsi hapus/ekspor
     Route::get('/reports/keuangan', [TransactionController::class, 'index'])->name('reports.financial');
 
-    // PROFILE
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // --- SECURITY & DEVICE MONITORING ---
+    Route::prefix('admin')->group(function () {
+        // Monitor Perangkat
+        Route::get('/devices', [DeviceController::class, 'index'])->name('admin.devices.index');
+        Route::delete('/devices/{id}', [DeviceController::class, 'logoutDevice'])->name('admin.devices.logout');
+        
+        // Firewall / Blacklist
+        Route::get('/blacklist', [DeviceController::class, 'blacklist'])->name('admin.ip.blacklist');
+        Route::post('/ip-block', [DeviceController::class, 'blockIp'])->name('admin.ip.block');
+        Route::delete('/blacklist/{id}', [DeviceController::class, 'unblockIp'])->name('admin.ip.unblock');
+    });
 
-    // DEVICE MONITOR
-    Route::get('/devices-monitor', [DeviceController::class, 'index'])->name('admin.devices');
-    Route::delete('/devices-monitor/{id}', [DeviceController::class, 'logoutDevice'])->name('admin.devices.logout');
+    // --- ACCOUNT SETTINGS ---
+    Route::prefix('profile')->group(function () {
+        Route::get('/', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/', [ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    });
 
-    // UTILITY / FIX
+    // --- UTILITY ---
     Route::get('/fix-data', function () {
         \App\Models\Reservation::whereNull('status')->update(['status' => 'booked']);
-        return 'Data berhasil diperbaiki';
+        return 'Data status reservasi berhasil dipulihkan.';
     });
-    Route::delete('/guests/bulk-delete', [GuestController::class, 'bulkDelete'])->name('guests.bulk-delete');
-    Route::get('/reservations/history', [ReservationController::class, 'history'])->name('reservations.history');
-    // Tambahkan ini di routes/web.php
-Route::get('/reservations/{id}/history', [ReservationController::class, 'moveToHistory'])->name('reservations.moveToHistory');
-    });
-
-    Route::post('/reservations/{id}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
+});

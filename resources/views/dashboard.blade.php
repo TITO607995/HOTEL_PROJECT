@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" x-data="{ mobileMenu: false }">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ mobileMenu: false }">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <title>Dashboard - Hotel SIG</title>
+    <title>{{ __('dashboard.title') }} - Hotel SIG</title>
 
     <style>
         [x-cloak] { display: none !important; }
@@ -33,7 +33,6 @@
         .safe-top { padding-top: env(safe-area-inset-top); }
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
         
-        /* Custom Pagination Styling */
         .pagination-container nav div:first-child { display: none; }
         .pagination-container svg { width: 20px; height: 20px; }
         .pagination-container span[aria-current="page"] span { 
@@ -67,12 +66,12 @@
                 <div>
                     <div class="flex items-center gap-2 mb-2">
                         <span class="h-1 w-8 bg-pink-400 rounded-full"></span>
-                        <span class="text-[10px] font-black text-pink-500 uppercase tracking-[0.3em]">Overview Panel</span>
+                        <span class="text-[10px] font-black text-pink-500 uppercase tracking-[0.3em]">{{ __('dashboard.overview') }}</span>
                     </div>
                     <h1 class="text-3xl lg:text-4xl font-extrabold text-gray-800 tracking-tight">
-                        Dashboard <span class="text-[#800000]">Hotel SIG</span>
+                        {{ __('dashboard.title') }} <span class="text-[#800000]">Hotel SIG</span>
                     </h1>
-                    <p class="text-gray-400 text-sm mt-1 font-medium italic">Status real-time ketersediaan kamar.</p>
+                    <p class="text-gray-400 text-sm mt-1 font-medium italic">{{ __('dashboard.subtitle') }}</p>
                 </div>
 
                 <div class="bg-[#F0E7E7] px-6 py-4 rounded-3xl border border-pink-200 flex items-center gap-4 shadow-sm min-w-[240px] w-full md:w-auto">
@@ -81,7 +80,7 @@
                     </div>
                     <div>
                         <span id="current-time-dash" class="block font-black text-gray-800 text-xl leading-none tracking-tighter">00:00:00</span>
-                        <span id="current-date-dash" class="text-[9px] font-bold text-pink-600 uppercase tracking-widest mt-1 block tracking-tighter">Memuat...</span>
+                        <span id="current-date-dash" class="text-[9px] font-bold text-pink-600 uppercase tracking-widest mt-1 block tracking-tighter">{{ __('dashboard.loading') }}</span>
                     </div>
                 </div>
             </div>
@@ -91,10 +90,13 @@
                 <div class="group relative overflow-hidden bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500">
                     <div class="absolute -right-6 -top-6 w-24 h-24 bg-[#F0E7E7] rounded-full opacity-50 group-hover:scale-150 transition-transform duration-700"></div>
                     <div class="relative z-10">
-                        <h3 class="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-4">Unit Kamar</h3>
+                        <h3 class="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-4">{{ __('dashboard.room_units') }}</h3>
                         <div class="flex items-baseline gap-2">
                             <span class="text-6xl font-black text-gray-800 tracking-tighter group-hover:text-[#800000] transition-colors">{{ $jumlah }}</span>
-                            <span class="text-xs font-bold text-gray-400 uppercase">{{ $nama }}</span>
+                            <span class="text-xs font-bold text-gray-400 uppercase">
+                                {{-- Mengambil terjemahan berdasarkan nama status dari DB --}}
+                                {{ __('dashboard.' . $nama) }}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -103,7 +105,7 @@
 
             <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden mb-10">
                 <div class="p-8 border-b border-gray-50 flex justify-between items-center bg-gradient-to-r from-white to-gray-50">
-                    <h2 class="text-xl font-extrabold text-gray-800 tracking-tight">Kamar Terisi & Maintenance</h2>
+                    <h2 class="text-xl font-extrabold text-gray-800 tracking-tight">{{ __('dashboard.table_title') }}</h2>
                     <span class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
                         <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live</span>
@@ -114,11 +116,11 @@
                     <table class="w-full text-left min-w-[800px]">
                         <thead>
                             <tr class="text-pink-400 uppercase text-[10px] font-black tracking-[0.2em] border-b border-gray-50">
-                                <th class="px-6 py-4">No. Kamar</th>
-                                <th class="px-6 py-4">Status</th>
-                                <th class="px-6 py-4">Payment</th>
-                                <th class="px-6 py-4 text-center">Status Bayar</th>
-                                <th class="px-6 py-4 text-center">Action</th>
+                                <th class="px-6 py-4">{{ __('dashboard.room_no') }}</th>
+                                <th class="px-6 py-4">{{ __('dashboard.status') }}</th>
+                                <th class="px-6 py-4">{{ __('dashboard.payment') }}</th>
+                                <th class="px-6 py-4 text-center">{{ __('dashboard.payment_status') }}</th>
+                                <th class="px-6 py-4 text-center">{{ __('dashboard.action') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
@@ -130,13 +132,12 @@
                                 
                                 <td class="px-6 py-6 text-center">
                                     <div class="flex justify-center">
-                                        {{-- LOGIKA STATUS BAYAR --}}
                                         @if($room['is_paid'])
-                                            <div class="w-9 h-9 rounded-xl bg-green-50 text-green-500 flex items-center justify-center border border-green-100 shadow-sm" title="Sudah Bayar">
+                                            <div class="w-9 h-9 rounded-xl bg-green-50 text-green-500 flex items-center justify-center border border-green-100 shadow-sm" title="Paid">
                                                 <i class="fas fa-check text-sm"></i>
                                             </div>
                                         @else
-                                            <div class="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 shadow-sm animate-pulse" title="Belum Bayar">
+                                            <div class="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 shadow-sm animate-pulse" title="Unpaid">
                                                 <i class="fas fa-times text-sm"></i>
                                             </div>
                                         @endif
@@ -154,7 +155,7 @@
                                 <td colspan="5" class="py-20 text-center">
                                     <div class="flex flex-col items-center opacity-20">
                                         <i class="fas fa-bed text-4xl mb-3"></i>
-                                        <p class="font-bold uppercase tracking-widest text-xs text-gray-400">Semua Kamar Kosong</p>
+                                        <p class="font-bold uppercase tracking-widest text-xs text-gray-400">{{ __('dashboard.empty_rooms') }}</p>
                                     </div>
                                 </td>
                             </tr>
@@ -168,7 +169,7 @@
                 </div>
             </div>
             
-            <p class="mt-10 text-center text-[10px] text-gray-300 font-bold uppercase tracking-[0.5em] pb-10">Hotel SIG System v2.1</p>
+            <p class="mt-10 text-center text-[10px] text-gray-300 font-bold uppercase tracking-[0.5em] pb-10">{{ __('dashboard.system_version') }}</p>
         </main>
     </div>
 
@@ -178,14 +179,17 @@
     <script>
         function updateTime() {
             const now = new Date();
+            // Ambil locale dari aplikasi Laravel untuk JS
+            const locale = "{{ app()->getLocale() == 'id' ? 'id-ID' : 'en-US' }}";
+            
             const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
             const dateOptions = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
             
             const timeEl = document.getElementById('current-time-dash');
             const dateEl = document.getElementById('current-date-dash');
             
-            if(timeEl) timeEl.innerText = now.toLocaleTimeString('id-ID', timeOptions).replace(/\./g, ':');
-            if(dateEl) dateEl.innerText = now.toLocaleDateString('id-ID', dateOptions).toUpperCase();
+            if(timeEl) timeEl.innerText = now.toLocaleTimeString(locale, timeOptions).replace(/\./g, ':');
+            if(dateEl) dateEl.innerText = now.toLocaleDateString(locale, dateOptions).toUpperCase();
         }
 
         setInterval(updateTime, 1000);

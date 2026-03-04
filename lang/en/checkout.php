@@ -1,0 +1,35 @@
+<?php
+
+return [
+    'title' => 'Check-out Process',
+    'subtitle' => 'Complete payment details or extend the stay.',
+    'back' => 'BACK',
+    'invoice' => 'Invoice',
+    'system_name' => 'SIG Hotel Information System',
+    'phone' => 'Phone',
+    'select_reservation' => 'Select Active Reservation',
+    'extend' => 'Extend Stay',
+    'choose_guest' => 'SELECT GUEST',
+    'guest_name' => 'Guest Name',
+    'room_number' => 'Room Number',
+    'description' => 'Service Description',
+    'duration' => 'Duration',
+    'unit_price' => 'Unit Price',
+    'room_rental' => 'Room Rental',
+    'select_res_prompt' => 'Please select a reservation',
+    'additional_charges' => 'Additional Charges',
+    'add_notes' => 'Add Notes (Minimarket, Laundry, etc.)...',
+    'total_payment' => 'Final Total Payment',
+    'print' => 'PRINT INVOICE',
+    'confirm' => 'CONFIRM CHECK-OUT',
+    
+    // SweetAlert & Modals
+    'confirm_title' => 'CONFIRMATION',
+    'confirm_msg' => 'Ensure the total bill of <b>$ :total</b> has been settled.',
+    'confirm_yes' => 'YES, CHECK-OUT',
+    'confirm_cancel' => 'CANCEL',
+    'extend_title' => 'Extend Stay',
+    'extend_subtitle' => 'Update length of stay',
+    'new_checkout' => 'New Check-out Date',
+    'min_stay_note' => '*Minimum D+1 from initial schedule.',
+];

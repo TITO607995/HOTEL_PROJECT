@@ -180,7 +180,7 @@ class ReservationController extends Controller
     }
     public function history(){
         $reservations = Reservation::with('room')
-        ->whereIn('status', ['checked-out', 'archived'])
+        ->whereIn('status', ['archived'])
         ->latest()
         ->get();
         return view('reservations.history', compact('reservations'));

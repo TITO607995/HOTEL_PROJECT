@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <title>Check-in System | Hotel SIG</title>
+    <title>Check-in System | SIG Hotel</title>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F9FAFB; }
         .btn-checkin { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -43,9 +43,9 @@
                             <span class="text-[10px] font-black text-[#800000] uppercase tracking-[0.4em]">Reception Desk</span>
                         </div>
                         <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">
-                            Registrasi <span class="text-[#800000]">Kedatangan</span>
+                            Arrival <span class="text-[#800000]">Registration</span>
                         </h1>
-                        <p class="text-gray-400 text-sm mt-2 font-medium">Verifikasi data tamu dan aktivasi kunci kamar secara real-time.</p>
+                        <p class="text-gray-400 text-sm mt-2 font-medium">Verify guest data and activate room keys in real-time.</p>
                     </div>
                     
                     <div class="hidden md:flex bg-white p-2 rounded-2xl border border-gray-100 shadow-sm items-center gap-3 pr-6">
@@ -53,8 +53,8 @@
                             <i class="fas fa-bell animate-swing"></i>
                         </div>
                         <div>
-                            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Antrean Hari Ini</span>
-                            <span class="text-sm font-black text-gray-800">{{ $reservations->count() }} Tamu Menunggu</span>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Today's Queue</span>
+                            <span class="text-sm font-black text-gray-800">{{ $reservations->count() }} Guests Waiting</span>
                         </div>
                     </div>
                 </div>
@@ -71,10 +71,10 @@
                 <table class="w-full text-left">
                     <thead>
                         <tr class="bg-gray-50/50 text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] border-b border-gray-100">
-                            <th class="px-8 py-6">Informasi Tamu</th>
-                            <th class="px-8 py-6 text-center">Unit Kamar</th>
-                            <th class="px-8 py-6">Status Pembayaran</th>
-                            <th class="px-8 py-6 text-right">Tindakan</th>
+                            <th class="px-8 py-6">Guest Information</th>
+                            <th class="px-8 py-6 text-center">Room Unit</th>
+                            <th class="px-8 py-6">Payment Status</th>
+                            <th class="px-8 py-6 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
@@ -121,7 +121,7 @@
                                 <div class="flex items-center justify-end gap-2">
                                     <button onclick='showGuestDetail(@json($res->load("room")))' 
                                         class="btn-checkin bg-gray-100 text-gray-600 text-[10px] font-black px-4 py-3.5 rounded-xl uppercase tracking-widest inline-flex items-center gap-2 hover:bg-gray-200">
-                                        <i class="fas fa-eye text-sm"></i> Detail
+                                        <i class="fas fa-eye text-sm"></i> Details
                                     </button>
 
                                     <button onclick="cancelReservation({{ $res->id }}, '{{ $res->guest_name }}')" 
@@ -150,7 +150,7 @@
                         <tr>
                             <td colspan="4" class="py-32 text-center text-gray-300">
                                 <i class="fas fa-calendar-check text-4xl mb-4"></i>
-                                <p class="uppercase font-black text-xs tracking-widest">Tidak ada tamu menunggu</p>
+                                <p class="uppercase font-black text-xs tracking-widest">No guests waiting in queue</p>
                             </td>
                         </tr>
                         @endforelse
@@ -181,32 +181,32 @@
                     </div>
                 `,
                 confirmButtonColor: '#10b981',
-                confirmButtonText: 'Tutup',
+                confirmButtonText: 'Close',
                 customClass: { popup: 'rounded-[3rem]' }
             });
         }
 
         function cancelReservation(id, name) {
             Swal.fire({
-                title: 'Batalkan Reservasi?',
-                text: "Anda akan membatalkan reservasi atas nama " + name,
+                title: 'Cancel Reservation?',
+                text: "You are about to cancel the reservation for " + name,
                 icon: 'warning',
                 input: 'select',
                 inputOptions: {
-                    'No Show': 'Tamu Tidak Datang (No Show)',
-                    'Guest Request': 'Permintaan Tamu',
-                    'Double Booking': 'Kesalahan Input (Double Booking)',
-                    'Force Majeure': 'Keadaan Darurat (Force Majeure)',
-                    'Other': 'Lainnya'
+                    'No Show': 'Guest No Show',
+                    'Guest Request': 'Guest Request',
+                    'Double Booking': 'Input Error (Double Booking)',
+                    'Force Majeure': 'Emergency (Force Majeure)',
+                    'Other': 'Others'
                 },
-                inputPlaceholder: '-- Pilih Alasan Pembatalan --',
+                inputPlaceholder: '-- Select Cancellation Reason --',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#f1f5f9',
-                confirmButtonText: 'Ya, Batalkan!',
-                cancelButtonText: '<span class="text-gray-500 font-bold">Tutup</span>',
+                confirmButtonText: 'Yes, Cancel!',
+                cancelButtonText: '<span class="text-gray-500 font-bold">Close</span>',
                 inputValidator: (value) => {
-                    if (!value) return 'Anda harus memilih alasan!'
+                    if (!value) return 'Please select a reason!'
                 },
                 customClass: {
                     popup: 'rounded-[2rem]',
@@ -239,12 +239,12 @@
 
         function redirectToPayment(id, name) {
             Swal.fire({
-                title: 'Lanjutkan ke Pembayaran?',
-                text: "Tamu " + name + " membutuhkan settlement pembayaran.",
+                title: 'Proceed to Payment?',
+                text: "Guest " + name + " requires payment settlement.",
                 icon: 'info',
                 showCancelButton: true,
                 confirmButtonColor: '#2563eb',
-                confirmButtonText: 'Buka Kasir'
+                confirmButtonText: 'Open Cashier'
             }).then((result) => {
                 if (result.isConfirmed) {
                     window.location.href = "{{ route('payments.index') }}?reservation_id=" + id;
