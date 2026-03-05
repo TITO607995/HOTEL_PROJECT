@@ -31,64 +31,60 @@ class DashboardController extends Controller
             ->paginate(10);
 
         // 4. MAPPING Data untuk Tampilan Table
-$roomList = $rooms->getCollection()->map(function ($room) {
-    $latestRes = $room->reservations->first();
-    
-    // 1. Logika Warna & Label Status (tetap sama)
-    $color = match ($room->status) {
-        'occupied'     => 'bg-red-600',
-        'booked'       => 'bg-blue-500',
-        'vacant dirty' => 'bg-yellow-500',
-        'oo'           => 'bg-black',
-        'os'           => 'bg-gray-600',
-        default        => 'bg-green-500',
-    };
+            $roomList = $rooms->getCollection()->map(function ($room) {
+                // Ambil reservasi terbaru yang statusnya bukan 'checked-out' (masih aktif/booked)
+                $latestRes = $room->reservations->first();
+                
+                $color = match ($room->status) {
+                    'occupied'     => 'bg-red-600',
+                    'booked'       => 'bg-blue-500',
+                    'vacant dirty' => 'bg-yellow-500',
+                    'oo'           => 'bg-black',
+                    'os'           => 'bg-gray-600',
+                    default        => 'bg-green-500',
+                };
 
-    $leftStatus = match ($room->status) {
-        'occupied'     => 'In-house',
-        'vacant dirty' => 'Dirty',
-        'booked'       => 'Booked',
-        'oo', 'os'     => 'Maintenance',
-        default        => '-'
-    };
+                $leftStatus = match ($room->status) {
+                    'occupied'     => 'In-house',
+                    'vacant dirty' => 'Dirty',
+                    'booked'       => 'Booked',
+                    'oo', 'os'     => 'Maintenance',
+                    default        => '-'
+                };
 
-    $paymentMethod = '-';
-    $isPaid = false;
+                $guestName = '-';
+                $paymentMethod = '-';
+                $isPaid = false; // Default silang (X)
 
-    // 2. LOGIKA PENGECEKAN PEMBAYARAN
-    if ($latestRes) {
-        // Tampilkan Metode Bayar
-        $paymentMethod = $latestRes->payment_method ? strtoupper($latestRes->payment_method) : '-';
-        
-        // --- JURUS SAPU JAGAT ---
-        // Kita cek semua kemungkinan nama kolom yang mungkin kamu buat di database
-        $statusBayar = strtolower($latestRes->payment_status ?? $latestRes->status ?? '');
-        $cekIsPaid   = $latestRes->is_paid ?? $latestRes->paid ?? 0;
+                if ($latestRes) {
+                    $guestName = $latestRes->guest_name ?? '-';
+                    $paymentMethod = $latestRes->payment_method ? strtoupper($latestRes->payment_method) : '-';
+                    
+                    // --- LOGIKA BARU: GUARANTEED = CENTANG ---
+                    // Kita cek kolom guarantee_type dari database
+                    $guarantee = strtolower($latestRes->guarantee_type ?? '');
+                    if ($guarantee === 'guaranteed') {
+                        $isPaid = true; // Jadi Centang Hijau
+                    } else {
+                        $isPaid = false; // Tetap Silang Merah
+                    }
+                } 
 
-        if (
-            in_array($statusBayar, ['paid', 'lunas', 'success', 'settlement', 'terbayar']) || 
-            $cekIsPaid == 1 || 
-            $cekIsPaid === true ||
-            $cekIsPaid === "1"
-        ) {
-            $isPaid = true;
-        }
-    } 
+                // Status Maintenance / Dirty otomatis centang supaya tidak merah semua
+                if (in_array($room->status, ['oo', 'os', 'vacant dirty'])) {
+                    $isPaid = true; 
+                }
 
-    // 3. Status Maintenance / Dirty otomatis centang supaya tidak merah semua
-    if (in_array($room->status, ['oo', 'os', 'vacant dirty'])) {
-        $isPaid = true; 
-    }
-
-    return [
-        'no'           => $room->room_number,
-        'left_status'  => $leftStatus,
-        'payment'      => $paymentMethod,
-        'is_paid'      => (bool) $isPaid, 
-        'action'       => strtoupper($room->status),
-        'action_color' => $color,
-    ];
-});
+                return [
+                    'no'           => $room->room_number,
+                    'guest_name'   => $guestName, // Kirim Nama Tamu ke Blade
+                    'left_status'  => $leftStatus,
+                    'payment'      => $paymentMethod,
+                    'is_paid'      => (bool) $isPaid, 
+                    'action'       => strtoupper($room->status),
+                    'action_color' => $color,
+                ];
+            });
 
         $rooms->setCollection($roomList);
         return view('dashboard', compact('username', 'stats', 'rooms'));

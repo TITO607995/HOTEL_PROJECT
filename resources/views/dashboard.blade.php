@@ -117,49 +117,40 @@
                         <thead>
                             <tr class="text-pink-400 uppercase text-[10px] font-black tracking-[0.2em] border-b border-gray-50">
                                 <th class="px-6 py-4">{{ __('dashboard.room_no') }}</th>
-                                <th class="px-6 py-4">{{ __('dashboard.status') }}</th>
+                                <th class="px-6 py-4">NAMA TAMU</th> <th class="px-6 py-4">{{ __('dashboard.status') }}</th>
                                 <th class="px-6 py-4">{{ __('dashboard.payment') }}</th>
                                 <th class="px-6 py-4 text-center">{{ __('dashboard.payment_status') }}</th>
                                 <th class="px-6 py-4 text-center">{{ __('dashboard.action') }}</th>
                             </tr>
                         </thead>
+
                         <tbody class="divide-y divide-gray-50">
                             @forelse($rooms as $room)
                             <tr class="group hover:bg-gray-50 transition-colors">
                                 <td class="px-6 py-6 font-black text-gray-800 text-lg group-hover:text-[#800000]">{{ $room['no'] }}</td>
+                                
+                                <td class="px-6 py-6 font-bold text-gray-600 text-sm">
+                                    {{ $room['guest_name'] }}
+                                </td>
+
                                 <td class="px-6 py-6 italic font-bold text-gray-600 text-sm">{{ $room['left_status'] }}</td>
                                 <td class="px-6 py-6 text-sm font-bold">{{ $room['payment'] }}</td>
                                 
                                 <td class="px-6 py-6 text-center">
                                     <div class="flex justify-center">
-                                        @if($room['is_paid'])
-                                            <div class="w-9 h-9 rounded-xl bg-green-50 text-green-500 flex items-center justify-center border border-green-100 shadow-sm" title="Paid">
+                                        @if($room['is_paid']) {{-- Jika Guaranteed --}}
+                                            <div class="w-9 h-9 rounded-xl bg-green-50 text-green-500 flex items-center justify-center border border-green-100 shadow-sm" title="Guaranteed">
                                                 <i class="fas fa-check text-sm"></i>
                                             </div>
-                                        @else
-                                            <div class="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 shadow-sm animate-pulse" title="Unpaid">
+                                        @else {{-- Jika Non-Guaranteed --}}
+                                            <div class="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 shadow-sm animate-pulse" title="Non-Guaranteed">
                                                 <i class="fas fa-times text-sm"></i>
                                             </div>
                                         @endif
                                     </div>
                                 </td>
-
-                                <td class="px-6 py-6 text-center">
-                                    <span class="px-4 py-1.5 rounded-full {{ $room['action_color'] }} text-white text-[9px] font-black uppercase tracking-widest shadow-sm">
-                                        {{ $room['action'] }}
-                                    </span>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="5" class="py-20 text-center">
-                                    <div class="flex flex-col items-center opacity-20">
-                                        <i class="fas fa-bed text-4xl mb-3"></i>
-                                        <p class="font-bold uppercase tracking-widest text-xs text-gray-400">{{ __('dashboard.empty_rooms') }}</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforelse
+                                </tr>
+                            @endforeach
                         </tbody>
                     </table>
                 </div>

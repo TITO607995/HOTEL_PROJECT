@@ -36,11 +36,31 @@
         .safe-top { padding-top: env(safe-area-inset-top); }
         [x-cloak] { display: none !important; }
 
+        /* TAMPILAN KHUSUS STRUK CETAK */
         @media print {
             .no-print { display: none !important; }
             body { overflow: visible !important; background: white !important; }
-            .print-area { box-shadow: none !important; border: none !important; margin: 0 !important; width: 100% !important; border-top: none !important; }
-            .invoice-card { border: 1px solid #eee !important; }
+            .print-area { 
+                box-shadow: none !important; 
+                border: none !important; 
+                margin: 0 !important; 
+                width: 100% !important; 
+                padding: 0 !important;
+            }
+            .invoice-card { 
+                border: none !important; 
+                border-radius: 0 !important; 
+            }
+            .table-header-dark {
+                background-color: #f3f4f6 !important;
+                color: black !important;
+                border-bottom: 2px solid black !important;
+            }
+            .grand-total-box {
+                background-color: #f3f4f6 !important;
+                color: black !important;
+                border: 1px solid #000 !important;
+            }
         }
     </style>
 </head>
@@ -58,28 +78,28 @@
 
         <main class="flex-1 p-4 md:p-8 lg:p-10 overflow-y-auto custom-scroll">
             
-            <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 no-print">
+            <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 no-print">
                 <div>
                     <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">{{ __('checkout.title') }}</h1>
-                    <p class="text-gray-500 font-medium">{{ __('checkout.subtitle') }}</p>
+                    <p class="text-gray-500 font-medium">Manajemen Pelunasan & Check-out Tamu</p>
                 </div>
                 <a href="{{ route('reservations.index') }}" class="flex items-center text-gray-400 hover:text-maroon transition-all font-bold text-xs tracking-widest group">
-                    <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> {{ __('checkout.back') }}
+                    <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> KEMBALI
                 </a>
             </div>
 
-            <div id="invoiceArea" class="max-w-5xl mx-auto bg-white rounded-[32px] shadow-2xl overflow-hidden border-t-[12px] border-[#800000] mb-10 print-area invoice-card transition-all">
+            <div id="invoiceArea" class="max-w-4xl mx-auto bg-white rounded-[32px] shadow-2xl overflow-hidden border-t-[12px] border-[#800000] mb-10 print-area invoice-card transition-all">
                 <div class="p-6 md:p-12">
                     
-                    <div class="flex flex-col md:flex-row justify-between items-start gap-6 mb-12 border-b border-gray-100 pb-8">
+                    <div class="flex flex-col md:flex-row justify-between items-start gap-6 mb-12 border-b-2 border-gray-100 pb-8">
                         <div>
-                            <h2 class="text-5xl font-black text-gray-900 tracking-tighter italic uppercase leading-none">{{ __('checkout.invoice') }}</h2>
-                            <p class="text-[10px] text-gray-400 font-bold tracking-[0.3em] uppercase mt-3">{{ __('checkout.system_name') }}</p>
+                            <h2 class="text-5xl font-black text-gray-900 tracking-tighter italic uppercase leading-none">INVOICE</h2>
+                            <p class="text-[10px] text-gray-400 font-bold tracking-[0.3em] uppercase mt-3 italic">SIG Hotel Information System</p>
                         </div>
                         <div class="text-left md:text-right space-y-1">
                             <p class="font-black text-gray-800 text-lg uppercase tracking-tight">SIG Hotel Group</p>
                             <p class="text-gray-500 text-xs italic font-medium">Jl. Arif Rahman Hakim No. 101, Gresik</p>
-                            <p class="text-gray-500 text-xs italic font-medium">{{ __('checkout.phone') }}: (031) 555-0123</p>
+                            <p class="text-gray-500 text-xs italic font-medium">Telp: (031) 555-0123</p>
                         </div>
                     </div>
 
@@ -87,21 +107,21 @@
                         @csrf
                         <input type="hidden" name="guest_name" id="inputGuestName">
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-10">
                             <div class="space-y-6">
                                 <div class="bg-gray-50 p-6 rounded-3xl border border-gray-100 shadow-sm no-print relative group transition-all hover:border-red-100">
                                     <div class="flex justify-between items-center mb-3">
-                                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ __('checkout.select_reservation') }}</label>
+                                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pilih Reservasi Aktif</label>
                                         
                                         <button type="button" x-show="selectedResId" x-cloak @click="openExtendModal()" 
                                             class="bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-2 border border-emerald-100">
-                                            <i class="fas fa-calendar-plus"></i> {{ __('checkout.extend') }}
+                                            <i class="fas fa-calendar-plus"></i> PERPANJANG
                                         </button>
                                     </div>
                                     
                                     <select id="resSelect" name="reservation_id" @change="handleGuestSelect($event)" 
                                         class="w-full bg-transparent border-none focus:ring-0 font-black text-xl text-maroon cursor-pointer appearance-none">
-                                        <option value="">-- {{ __('checkout.choose_guest') }} --</option>
+                                        <option value="">-- Pilih Tamu --</option>
                                         @foreach($reservations as $r)
                                             <option value="{{ $r->id }}" 
                                                     data-room="{{ $r->room->room_number }}" 
@@ -117,44 +137,44 @@
                                 </div>
 
                                 <div class="hidden print:block border-dotted-b pb-3">
-                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ __('checkout.guest_name') }}</p>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nama Tamu</p>
                                     <p id="printGuestName" class="font-extrabold text-2xl text-gray-900">-</p>
                                 </div>
                             </div>
 
-                            <div class="bg-white p-2 space-y-5">
+                            <div class="bg-white p-2 space-y-4">
                                 <div class="flex justify-between items-end border-dotted-b pb-2">
-                                    <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">{{ __('checkout.room_number') }}</span>
-                                    <span id="displayRoom" class="font-black text-xl text-gray-800">-</span>
+                                    <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Nomor Kamar</span>
+                                    <span id="displayRoom" class="font-black text-2xl text-gray-800">-</span>
                                 </div>
                                 <div class="flex justify-between items-end border-dotted-b pb-2">
-                                    <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Check-in</span>
+                                    <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest italic">Check-in</span>
                                     <span id="displayIn" class="font-bold text-sm text-gray-700 tracking-tight">-</span>
                                 </div>
                                 <div class="flex justify-between items-end border-dotted-b pb-2">
-                                    <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest text-maroon">Check-out</span>
+                                    <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest text-maroon italic">Check-out</span>
                                     <span id="displayOut" class="font-extrabold text-sm text-maroon tracking-tight">-</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="overflow-hidden rounded-3xl border border-gray-100 mb-10 shadow-sm">
-                            <table class="w-full text-sm">
+                        <div class="overflow-hidden rounded-3xl border border-gray-100 mb-8 shadow-sm">
+                            <table class="w-full text-sm text-gray-800">
                                 <thead>
-                                    <tr class="bg-gray-900 text-white uppercase text-[9px] font-bold tracking-[0.2em]">
+                                    <tr class="bg-gray-900 text-white uppercase text-[9px] font-bold tracking-[0.2em] table-header-dark">
                                         <th class="py-5 px-6 text-center w-16">No</th>
-                                        <th class="py-5 px-6 text-left">{{ __('checkout.description') }}</th>
-                                        <th class="py-5 px-6 text-center">{{ __('checkout.duration') }}</th>
-                                        <th class="py-5 px-6 text-right">{{ __('checkout.unit_price') }}</th>
+                                        <th class="py-5 px-6 text-left">Deskripsi Layanan</th>
+                                        <th class="py-5 px-6 text-center">Durasi</th>
+                                        <th class="py-5 px-6 text-right">Harga Satuan</th>
                                         <th class="py-5 px-6 text-right">Subtotal</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-50">
-                                    <tr class="bg-gray-50/30">
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr class="bg-white">
                                         <td class="p-6 text-center font-bold text-gray-300">01</td>
                                         <td class="p-6">
-                                            <p class="font-extrabold text-gray-800 text-base" id="detailRoomType">{{ __('checkout.room_rental') }}</p>
-                                            <p class="text-[10px] text-gray-400 uppercase font-bold mt-1 italic" id="detailStayPeriod">{{ __('checkout.select_res_prompt') }}</p>
+                                            <p class="font-extrabold text-gray-800 text-base" id="detailRoomType">Sewa Kamar</p>
+                                            <p class="text-[10px] text-gray-400 uppercase font-bold mt-1 italic" id="detailStayPeriod">Pilih reservasi terlebih dahulu</p>
                                         </td>
                                         <td class="p-6 text-center font-bold text-gray-700" id="displayNights">0</td>
                                         <td class="p-6 text-right font-bold text-gray-700" id="displayPricePerNight">0</td>
@@ -163,11 +183,11 @@
                                     <tr class="no-print group hover:bg-red-50/30 transition-colors">
                                         <td class="p-6 text-center font-bold text-gray-300">02</td>
                                         <td class="p-6">
-                                            <input type="text" name="notes" placeholder="{{ __('checkout.add_notes') }}" 
+                                            <input type="text" name="notes" placeholder="Catatan tambahan (Mini bar, Laundry, dll)..." 
                                                 class="w-full bg-transparent border-none focus:ring-0 italic text-sm text-gray-600 placeholder:text-gray-300 p-0 font-medium">
                                         </td>
                                         <td class="p-6 text-center text-gray-300">-</td>
-                                        <td class="p-6 text-right text-gray-400 uppercase text-[9px] font-black tracking-widest">{{ __('checkout.additional_charges') }}</td>
+                                        <td class="p-6 text-right text-gray-400 uppercase text-[9px] font-black tracking-widest italic">Biaya Lain-Lain</td>
                                         <td class="p-6">
                                             <div class="flex items-center justify-end gap-2">
                                                 <span class="text-xs font-bold text-gray-400 italic">Rp</span>
@@ -176,14 +196,44 @@
                                             </div>
                                         </td>
                                     </tr>
+                                    <tr class="bg-gray-50/30 border-t border-gray-100">
+                                        <td colspan="4" class="p-4 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">Termasuk Service Charge (10%)</td>
+                                        <td class="p-4 text-right text-xs font-bold text-gray-500">Rp <span x-text="formatNumber(serviceCharge)">0</span></td>
+                                    </tr>
+                                    <tr class="bg-gray-50/30 border-t border-gray-100">
+                                        <td colspan="4" class="p-4 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">Termasuk Pajak Pemerintah (11%)</td>
+                                        <td class="p-4 text-right text-xs font-bold text-gray-500">Rp <span x-text="formatNumber(govTax)">0</span></td>
+                                    </tr>
                                 </tbody>
                                 <tfoot>
-                                    <tr class="bg-gray-900 border-t-4 border-maroon">
-                                        <td colspan="4" class="p-8 text-right font-bold text-white uppercase tracking-[0.3em] text-[10px]">{{ __('checkout.total_payment') }}</td>
-                                        <td class="p-8 text-right">
-                                            <div class="flex items-start justify-end gap-1 text-white">
+                                    <tr class="bg-gray-900 border-t-4 border-maroon text-white grand-total-box">
+                                        <td colspan="4" class="p-6 text-right font-bold uppercase tracking-[0.3em] text-[10px]">Total Pembayaran (Nett)</td>
+                                        <td class="p-6 text-right">
+                                            <div class="flex items-start justify-end gap-1">
                                                 <span class="text-xs font-bold mt-2 opacity-50">Rp</span>
                                                 <span class="text-4xl font-black tracking-tighter" x-text="grandTotal">0</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="bg-gray-50 border-t border-gray-200">
+                                        <td colspan="4" class="p-4 text-right font-bold text-gray-500 uppercase tracking-[0.2em] text-[10px]">Uang Dibayarkan</td>
+                                        <td class="p-4 text-right">
+                                            <div class="flex items-center justify-end gap-2">
+                                                <span class="text-xs font-bold text-gray-400 italic">Rp</span>
+                                                <input type="number" x-model.number="paidAmount" @input="calculateChange"
+                                                    class="w-40 bg-white border border-gray-200 rounded-xl focus:border-maroon focus:ring-0 text-right font-black text-emerald-600 text-xl py-2 px-3 transition-all no-print">
+                                                <span class="hidden print:block font-black text-xl text-emerald-600" x-text="formatNumber(paidAmount || 0)"></span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="bg-white">
+                                        <td colspan="4" class="p-4 text-right font-bold text-gray-400 uppercase tracking-[0.2em] text-[10px]">Kembalian</td>
+                                        <td class="p-4 text-right">
+                                            <div class="flex items-center justify-end gap-1">
+                                                <span class="text-xs font-bold text-gray-400 italic">Rp</span>
+                                                <span class="text-2xl font-black tracking-tighter" 
+                                                    :class="changeAmount < 0 ? 'text-red-500' : 'text-gray-800'"
+                                                    x-text="formatNumber(changeAmount)">0</span>
                                             </div>
                                         </td>
                                     </tr>
@@ -193,70 +243,49 @@
 
                         <div class="flex flex-col md:flex-row justify-between items-center gap-12 mt-12 pt-10 border-t border-gray-50">
                             <div class="text-center order-2 md:order-1">
-                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-20 italic">Front Office Approval</p>
-                                <div class="w-64 h-px bg-gray-200 mx-auto"></div>
+                                <p class="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] mb-16 italic">Hormat Kami, Front Office</p>
+                                <div class="w-48 h-px bg-gray-200 mx-auto"></div>
                                 <p class="text-[11px] mt-3 font-extrabold text-gray-800 uppercase tracking-widest">{{ Auth::user()->name ?? 'Administrator' }}</p>
                             </div>
                             
                             <div class="flex flex-col sm:flex-row gap-4 no-print items-center w-full md:w-auto order-1 md:order-2">
                                 <button type="button" onclick="window.print()" 
                                     class="w-full sm:w-auto bg-gray-100 text-gray-600 font-bold px-10 py-5 rounded-2xl hover:bg-gray-200 transition-all flex justify-center items-center gap-3 text-xs tracking-widest active:scale-95">
-                                    <i class="fas fa-print"></i> {{ __('checkout.print') }}
+                                    <i class="fas fa-print"></i> CETAK STRUK
                                 </button>
-                                <button type="submit" id="submitBtn" :disabled="!selectedResId" 
-                                    class="w-full sm:w-auto bg-maroon disabled:bg-gray-200 disabled:text-gray-400 text-white font-black px-14 py-5 rounded-2xl shadow-xl shadow-red-900/20 hover:bg-red-900 hover:-translate-y-1 transition-all flex justify-center items-center gap-3 text-xs tracking-widest active:scale-95">
-                                    {{ __('checkout.confirm') }} <i class="fas fa-check-double"></i>
+                                <button type="submit" id="submitBtn" :disabled="!selectedResId || paidAmount < totalRaw" 
+                                    class="w-full sm:w-auto bg-maroon disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-black px-14 py-5 rounded-2xl shadow-xl shadow-red-900/20 hover:bg-red-900 transition-all flex justify-center items-center gap-3 text-xs tracking-widest active:scale-95">
+                                    KONFIRMASI LUNAS <i class="fas fa-check-double ml-1"></i>
                                 </button>
                             </div>
                         </div>
+                        <p class="mt-8 text-center text-[9px] text-gray-300 font-medium italic hidden print:block">Terima kasih telah menginap di SIG Hotel Group. Sampai jumpa kembali!</p>
                     </form>
                 </div>
             </div>
         </main>
     </div>
 
-    <div x-show="extendModal" 
-         class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         x-cloak>
-        
-        <div class="bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl" @click.away="extendModal = false">
+    <div x-show="extendModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" x-cloak>
+        <div class="bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl">
             <div class="bg-maroon p-8 text-white">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-2xl font-black italic uppercase tracking-tighter">{{ __('checkout.extend_title') }}</h3>
-                    <button @click="extendModal = false" class="text-white/50 hover:text-white"><i class="fas fa-times"></i></button>
-                </div>
-                <p class="text-white/70 text-xs font-bold uppercase tracking-widest mt-1">{{ __('checkout.extend_subtitle') }}</p>
+                <h3 class="text-2xl font-black italic uppercase tracking-tighter">PERPANJANG MASA INAP</h3>
+                <p class="text-white/70 text-xs font-bold uppercase tracking-widest mt-1">Update Tanggal Check-out</p>
             </div>
-            
             <form :action="'/reservasi/perpanjang/' + selectedResId" method="POST" class="p-8 space-y-6">
                 @csrf
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{{ __('checkout.guest_name') }}</label>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Nama Tamu</label>
                     <p class="font-bold text-gray-800 text-lg" x-text="guestInfo.name"></p>
                 </div>
-
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{{ __('checkout.new_checkout') }}</label>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Check-out Baru</label>
                     <input type="date" name="new_departure_date" :min="guestInfo.minNewDate" required
                            class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-4 font-bold text-gray-700 focus:border-maroon focus:ring-0 transition-all">
-                    <p class="text-[9px] text-gray-400 mt-2 italic font-medium">{{ __('checkout.min_stay_note') }}</p>
                 </div>
-
                 <div class="flex gap-3 pt-4">
-                    <button type="button" @click="extendModal = false"
-                            class="flex-1 bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl hover:bg-gray-200 transition-all text-xs tracking-widest">
-                        {{ __('checkout.confirm_cancel') }}
-                    </button>
-                    <button type="submit"
-                            class="flex-1 bg-maroon text-white font-black py-4 rounded-2xl shadow-lg shadow-red-900/20 hover:bg-red-900 transition-all text-xs tracking-widest">
-                        {{ __('checkout.save') }}
-                    </button>
+                    <button type="button" @click="extendModal = false" class="flex-1 bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl text-xs">BATAL</button>
+                    <button type="submit" class="flex-1 bg-maroon text-white font-black py-4 rounded-2xl text-xs shadow-lg">SIMPAN</button>
                 </div>
             </form>
         </div>
@@ -271,7 +300,12 @@
             return {
                 selectedResId: '',
                 roomSubtotal: 0,
+                serviceCharge: 0,
+                govTax: 0,        
+                totalRaw: 0,
                 grandTotal: '0',
+                paidAmount: 0,
+                changeAmount: 0,
                 extendModal: false,
                 guestInfo: { name: '', room: '', outDate: '', minNewDate: '' },
 
@@ -313,7 +347,7 @@
                         'displayOut': opt.dataset.out,
                         'printGuestName': opt.dataset.name,
                         'inputGuestName': opt.dataset.name,
-                        'detailRoomType': `{{ __('checkout.room_rental') }} (${opt.dataset.type})`,
+                        'detailRoomType': `Sewa Kamar (${opt.dataset.type})`,
                         'detailStayPeriod': `${opt.dataset.in} s/d ${opt.dataset.out}`,
                         'displayNights': `${nights} Malam`,
                         'displayPricePerNight': this.formatNumber(price),
@@ -324,55 +358,76 @@
                         const el = document.getElementById(id);
                         if (el) el[el.tagName === 'INPUT' ? 'value' : 'innerText'] = val;
                     }
-
                     document.getElementById('checkoutForm').action = `/reservasi/check-out/${this.selectedResId}/process`;
                 },
 
                 calculateGrandTotal() {
                     const additional = parseInt(document.getElementById('addCharge').value) || 0;
-                    this.grandTotal = this.formatNumber(this.roomSubtotal + additional);
+                    
+                    // 1. HARGA NETT LOGIC 🔥
+                    // Kita set totalRaw adalah Harga Kamar + Biaya Tambahan
+                    this.totalRaw = this.roomSubtotal + additional;
+                    
+                    // 2. BREAKDOWN DARI HARGA NETT (untuk struk)
+                    // Menggunakan pembagi 1,221 untuk mengeluarkan nilai pajak di dalam harga Nett
+                    const basePrice = this.totalRaw / 1.221;
+                    this.serviceCharge = Math.round(basePrice * 0.10);
+                    this.govTax = Math.round((basePrice + this.serviceCharge) * 0.11);
+                    
+                    this.grandTotal = this.formatNumber(this.totalRaw);
+                    this.calculateChange();
+                },
+
+                calculateChange() {
+                    this.changeAmount = (this.paidAmount || 0) - this.totalRaw;
                 },
 
                 resetUI() {
                     this.roomSubtotal = 0;
+                    this.serviceCharge = 0;
+                    this.govTax = 0;
+                    this.totalRaw = 0;
                     this.grandTotal = '0';
+                    this.paidAmount = 0;
+                    this.changeAmount = 0;
                     this.selectedResId = '';
                     const resetIds = ['displayRoom', 'displayIn', 'displayOut', 'printGuestName', 'displayNights', 'displayPricePerNight', 'displayRoomSubtotal'];
                     resetIds.forEach(id => {
                         const el = document.getElementById(id);
                         if(el) el.innerText = id.includes('display') && !id.includes('Nights') ? "-" : "0";
                     });
-                    document.getElementById('detailStayPeriod').innerText = "{{ __('checkout.select_res_prompt') }}";
                 },
 
                 openExtendModal() {
-                    if(this.selectedResId) {
-                        this.extendModal = true;
-                    }
+                    if(this.selectedResId) this.extendModal = true;
                 }
             }
         }
 
-        @if(session('success'))
-            Swal.fire('{{ __("checkout.success") }}!', "{{ session('success') }}", 'success');
-        @endif
-
         document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const total = document.querySelector('[x-text="grandTotal"]').innerText;
+            const alpineData = Alpine.find(document.querySelector('[x-data="checkoutPage()"]'))._x_dataStack[0];
             
+            if (alpineData.paidAmount < alpineData.totalRaw) {
+                Swal.fire({
+                    title: 'Pembayaran Kurang!',
+                    html: `Total tagihan <b>Rp ${alpineData.grandTotal}</b>.<br>Sisa: <span class="text-red-600 font-bold">Rp ${alpineData.formatNumber(Math.abs(alpineData.changeAmount))}</span>`,
+                    icon: 'error',
+                    confirmButtonColor: '#800000',
+                });
+                return;
+            }
+
             Swal.fire({
-                title: "{{ __('checkout.confirm_title') }}",
-                html: "{{ __('checkout.confirm_msg', ['total' => '']) }}".replace(':total', total),
+                title: "Konfirmasi Pelunasan",
+                html: `Selesaikan Check-out untuk <b>${alpineData.guestInfo.name}</b>?<br>Kembalian: <b>Rp ${alpineData.formatNumber(alpineData.changeAmount)}</b>`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#800000',
-                confirmButtonText: "{{ __('checkout.confirm_yes') }}",
-                cancelButtonText: "{{ __('checkout.confirm_cancel') }}"
+                confirmButtonText: "Ya, Selesaikan",
+                cancelButtonText: "Batal"
             }).then((result) => {
-                if (result.isConfirmed) {
-                    this.submit();
-                }
+                if (result.isConfirmed) this.submit();
             });
         });
     </script>
