@@ -186,57 +186,60 @@
             });
         }
 
-        function cancelReservation(id, name) {
-            Swal.fire({
-                title: 'Cancel Reservation?',
-                text: "You are about to cancel the reservation for " + name,
-                icon: 'warning',
-                input: 'select',
-                inputOptions: {
-                    'No Show': 'Guest No Show',
-                    'Guest Request': 'Guest Request',
-                    'Double Booking': 'Input Error (Double Booking)',
-                    'Force Majeure': 'Emergency (Force Majeure)',
-                    'Other': 'Others'
-                },
-                inputPlaceholder: '-- Select Cancellation Reason --',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#f1f5f9',
-                confirmButtonText: 'Yes, Cancel!',
-                cancelButtonText: '<span class="text-gray-500 font-bold">Close</span>',
-                inputValidator: (value) => {
-                    if (!value) return 'Please select a reason!'
-                },
-                customClass: {
-                    popup: 'rounded-[2rem]',
-                    confirmButton: 'rounded-xl px-6 py-3 text-[10px] font-black uppercase',
-                    cancelButton: 'rounded-xl px-6 py-3 text-[10px] font-black uppercase'
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = "{{ url('reservations') }}/" + id + "/cancel"; 
-                    
-                    const csrfInput = document.createElement('input');
-                    csrfInput.type = 'hidden';
-                    csrfInput.name = '_token';
-                    csrfInput.value = '{{ csrf_token() }}';
-                    
-                    const reasonInput = document.createElement('input');
-                    reasonInput.type = 'hidden';
-                    reasonInput.name = 'cancel_reason';
-                    reasonInput.value = result.value;
-                    
-                    form.appendChild(csrfInput);
-                    form.appendChild(reasonInput);
-                    document.body.appendChild(form);
-                    form.submit();
-                }
-            })
-        }
-
+                    function cancelReservation(id, name) {
+                Swal.fire({
+                    title: 'Batalkan Reservasi?',
+                    html: `Anda akan membatalkan reservasi atas nama <br><b>${name}</b>`,
+                    icon: 'warning',
+                    input: 'textarea', // Diubah dari select ke textarea
+                    inputLabel: 'Alasan Pembatalan',
+                    inputPlaceholder: 'Ketik alasan pembatalan di sini...',
+                    inputAttributes: {
+                        'aria-label': 'Ketik alasan pembatalan di sini'
+                    },
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#f1f5f9',
+                    confirmButtonText: 'Ya, Batalkan!',
+                    cancelButtonText: '<span class="text-gray-500 font-bold">Kembali</span>',
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'Alasan pembatalan wajib diisi!'
+                        }
+                        if (value.length < 5) {
+                            return 'Alasan terlalu pendek, berikan keterangan lebih jelas.'
+                        }
+                    },
+                    customClass: {
+                        popup: 'rounded-[2rem]',
+                        confirmButton: 'rounded-xl px-6 py-3 text-[10px] font-black uppercase',
+                        cancelButton: 'rounded-xl px-6 py-3 text-[10px] font-black uppercase',
+                        input: 'rounded-2xl text-sm font-medium border-gray-100 focus:ring-[#800000]'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Form submission logic
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = "{{ url('reservations') }}/" + id + "/cancel"; 
+                        
+                        const csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = '_token';
+                        csrfInput.value = '{{ csrf_token() }}';
+                        
+                        const reasonInput = document.createElement('input');
+                        reasonInput.type = 'hidden';
+                        reasonInput.name = 'cancel_reason';
+                        reasonInput.value = result.value; // Nilai dari textarea masuk ke sini
+                        
+                        form.appendChild(csrfInput);
+                        form.appendChild(reasonInput);
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                })
+            }
         function redirectToPayment(id, name) {
             Swal.fire({
                 title: 'Proceed to Payment?',
