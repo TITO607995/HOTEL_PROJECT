@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hotel_app_mobile/screens/checkout_screen.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // 🔥 Tambahan Import Brankas
 import '../services/reservation_service.dart';
 import 'add_reservation_screen.dart';
 
 class OrderScreen extends StatefulWidget {
-  // Mode bisa berisi: 'all' (Daftar biasa), 'checkin' (Khusus Check-in), 'checkout' (Khusus Check-out)
   final String mode; 
   const OrderScreen({super.key, this.mode = 'all'});
 
@@ -19,6 +19,7 @@ class _OrderScreenState extends State<OrderScreen> {
   
   List<dynamic> reservations = [];
   bool isLoading = true;
+  bool isSuperadmin = false; // 🔥 Variabel penentu hak akses
 
   @override
   void initState() {
@@ -27,9 +28,14 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   Future<void> _loadData() async {
+    // 1. Buka brankas buat ngecek status Superadmin
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool superadminStatus = prefs.getBool('is_superadmin') ?? false;
+
     final data = await ReservationService.fetchReservations();
     if (mounted) {
       setState(() {
+        isSuperadmin = superadminStatus; // Simpan statusnya
         reservations = data;
         isLoading = false;
       });
@@ -45,14 +51,12 @@ class _OrderScreenState extends State<OrderScreen> {
 
   void _showConfirmDialog(int id, String action, String guestName, String resType) {
     String selectedPayment = 'Cash'; 
-    
-    // 1. TANGKAP MESSENGER DARI AWAL BIAR AMAN!
     final messenger = ScaffoldMessenger.of(context);
 
     showDialog(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (statefulContext, setStateLocal) { // <-- Ganti nama context biar gak bentrok
+        builder: (statefulContext, setStateLocal) {
           bool isUnpaid = (action == 'Check-In' && resType == 'non-guaranteed');
 
           return AlertDialog(
@@ -62,6 +66,7 @@ class _OrderScreenState extends State<OrderScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Nama tamu di sini juga bakal tersensor kalau dia incognito
                 Text('Apakah Anda yakin ingin melakukan $action untuk tamu $guestName?'),
                 
                 if (isUnpaid) ...[
@@ -108,7 +113,7 @@ class _OrderScreenState extends State<OrderScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
                 ),
                 onPressed: () async {
-                  Navigator.pop(dialogContext); // Tutup dialog
+                  Navigator.pop(dialogContext); 
                   setState(() => isLoading = true); 
                   
                   bool success = action == 'Check-In' 
@@ -117,7 +122,6 @@ class _OrderScreenState extends State<OrderScreen> {
 
                   if (!mounted) return;
 
-                  // 2. PAKAI MESSENGER YANG UDAH DITANGKAP TADI
                   if (success) {
                     messenger.showSnackBar(SnackBar(content: Text('$action Berhasil! 🎉'), backgroundColor: Colors.green));
                     _loadData(); 
@@ -141,7 +145,7 @@ class _OrderScreenState extends State<OrderScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Batalkan Reservasi?', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-        content: Text('Apakah Anda yakin ingin membatalkan reservasi untuk $guestName? Kamar akan langsung kembali Available.'),
+        content: Text('Apakah Anda yakin ingin membatalkan reservasi untuk $guestName?'),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Tutup', style: TextStyle(color: Colors.grey))),
@@ -159,7 +163,7 @@ class _OrderScreenState extends State<OrderScreen> {
               if (!mounted) return;
 
               if (success) {
-                messenger.showSnackBar(const SnackBar(content: Text('Reservasi Dibatalkan! Kamar kembali Ready.'), backgroundColor: Colors.green));
+                messenger.showSnackBar(const SnackBar(content: Text('Reservasi Dibatalkan! Masuk ke History.'), backgroundColor: Colors.green));
                 _loadData(); 
               } else {
                 messenger.showSnackBar(const SnackBar(content: Text('Gagal membatalkan reservasi!'), backgroundColor: Colors.red));
@@ -175,10 +179,8 @@ class _OrderScreenState extends State<OrderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Filter data sesuai Mode yang dipanggil
     final displayList = reservations.where((res) {
       if (widget.mode == 'checkin') return res['status'] == 'BOOKED';
-      // Tambahin logika extend di sini, sama kayak checkout yang nampilin tamu In-House
       if (widget.mode == 'checkout' || widget.mode == 'extend') return res['status'] == 'CHECKED-IN' || res['status'] == 'IN-HOUSE';
       return true; 
     }).toList();
@@ -188,17 +190,15 @@ class _OrderScreenState extends State<OrderScreen> {
       appBar: AppBar(
         backgroundColor: bgGrey,
         elevation: 0,
-        // 2. Judul berubah sesuai mode
         title: Text(
           widget.mode == 'checkin' ? 'Pilih Tamu Check-In' :
           widget.mode == 'checkout' ? 'Pilih Tamu Check-Out' : 
-          widget.mode == 'extend' ? 'Perpanjang Menginap' : 'Daftar Reservasi', // <-- TAMBAHIN INI
+          widget.mode == 'extend' ? 'Perpanjang Menginap' : 'Daftar Reservasi',
           style: const TextStyle(color: Color(0xFF1B212D), fontWeight: FontWeight.w900, fontSize: 18)
         ),
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
-          // 3. Tombol (+) Add cuma muncul kalau di mode 'all' (Tab Orders)
-          if (widget.mode == 'all')
+          if (widget.mode == 'all' || widget.mode == 'checkin')
             Container(
               margin: const EdgeInsets.only(right: 20, top: 8, bottom: 8),
               decoration: BoxDecoration(color: primaryMaroon, borderRadius: BorderRadius.circular(12)),
@@ -224,11 +224,10 @@ class _OrderScreenState extends State<OrderScreen> {
                   'Belum ada data reservasi.', 
                   style: const TextStyle(color: Colors.grey)
                 ))
-              // BUNGKUS DENGAN REFRESH INDICATOR BIAR BISA DITARIK
               : RefreshIndicator(
                   color: primaryMaroon,
                   backgroundColor: Colors.white,
-                  onRefresh: _loadData, // Tarik layar buat loading ulang
+                  onRefresh: _loadData,
                   child: ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                     padding: const EdgeInsets.only(left: 20, right: 20, bottom: 100, top: 10), 
@@ -237,6 +236,18 @@ class _OrderScreenState extends State<OrderScreen> {
                       final res = displayList[index];
                       Color statusColor = _getStatusColor(res['status']);
                       String resType = res['reservation_type'] ?? 'non-guaranteed';
+
+                      // ========================================================
+                      // 🔥 LOGIKA SENSOR NAMA (INCOGNITO MODE) 🔥
+                      // ========================================================
+                      // Anggap dari backend API mengirimkan flag 'incognito' bernilai 1 atau true
+                      bool isIncognito = res['incognito'] == 1 || res['incognito'] == true || res['is_incognito'] == 1 || res['is_incognito'] == true;
+                      
+                      String displayGuestName = res['guest_name'] ?? 'Tamu';
+                      // Jika dia Incognito DAN yang login BUKAN Superadmin -> Sensor!
+                      if (isIncognito && !isSuperadmin) {
+                        displayGuestName = '*** (Rahasia/Incognito)';
+                      }
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 15),
@@ -261,7 +272,10 @@ class _OrderScreenState extends State<OrderScreen> {
                               ],
                             ),
                             const SizedBox(height: 12),
-                            Text(res['guest_name'], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1B212D))),
+                            
+                            // 🔥 PANGGIL NAMA YANG SUDAH DI-FILTER DI SINI
+                            Text(displayGuestName, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: (isIncognito && !isSuperadmin) ? primaryMaroon : const Color(0xFF1B212D))),
+                            
                             const SizedBox(height: 12),
                             Row(
                               children: [
@@ -275,17 +289,14 @@ class _OrderScreenState extends State<OrderScreen> {
                               children: [
                                 const Icon(Icons.account_balance_wallet_outlined, size: 14, color: Colors.grey),
                                 const SizedBox(width: 5),
-                                // Menampilkan Info Metode Pembayaran + Status (Lunas/Belum)
                                 Text('${res['payment_method']} (${resType == 'guaranteed' ? 'Lunas' : 'Belum Lunas'})', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: resType == 'guaranteed' ? Colors.green : Colors.red)),
                               ],
                             ),
                             
-                            // 4. Tombol Aksi cuma muncul kalau kita manggil via mode checkin/checkout
                             if (widget.mode == 'checkin') ...[
                               const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(color: Colors.black12)),
                               Row(
                                 children: [
-                                  // TOMBOL KIRI: BATAL (Outlined Merah)
                                   Expanded(
                                     flex: 1,
                                     child: SizedBox(
@@ -295,20 +306,21 @@ class _OrderScreenState extends State<OrderScreen> {
                                           side: const BorderSide(color: Colors.red),
                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                         ),
-                                        onPressed: () => _showCancelDialog(res['id'], res['guest_name']),
+                                        // Lempar displayGuestName biar pas dialog konfirmasi batal namanya tetep disensor
+                                        onPressed: () => _showCancelDialog(res['id'], displayGuestName),
                                         child: const Text('BATAL', style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
                                       ),
                                     ),
                                   ),
                                   const SizedBox(width: 10),
-                                  // TOMBOL KANAN: CHECK-IN (Hijau Solid)
                                   Expanded(
                                     flex: 2,
                                     child: SizedBox(
                                       height: 40,
                                       child: ElevatedButton(
                                         style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade600, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                                        onPressed: () => _showConfirmDialog(res['id'], 'Check-In', res['guest_name'], resType),
+                                        // Lempar displayGuestName biar pas dialog checkin namanya tetep disensor
+                                        onPressed: () => _showConfirmDialog(res['id'], 'Check-In', displayGuestName, resType),
                                         child: const Text('PROSES CHECK-IN', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
                                       ),
                                     ),
@@ -322,8 +334,8 @@ class _OrderScreenState extends State<OrderScreen> {
                               width: double.infinity, height: 40,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade700, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                                
                                 onPressed: () async {
+                                  // Lempar objek reservasi utuh (nanti di layar checkout lu bisa sensor juga kalau mau)
                                   final result = await Navigator.push(
                                     context, 
                                     MaterialPageRoute(builder: (context) => CheckoutScreen(reservation: res))
@@ -334,12 +346,10 @@ class _OrderScreenState extends State<OrderScreen> {
                                     _loadData();
                                   }
                                 },
-
                                 child: const Text('PROSES CHECK-OUT', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
                               ),
                             ),
                           ],
-
                           if (widget.mode == 'extend') ...[
                             const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(color: Colors.black12)),
                             SizedBox(
@@ -348,24 +358,17 @@ class _OrderScreenState extends State<OrderScreen> {
                                 style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                                 onPressed: () async {
                                   final messenger = ScaffoldMessenger.of(context);
-
-                                  // ==========================================
-                                  // LOGIKA BARU: BACA TANGGAL CHECKOUT LAMA
-                                  // ==========================================
                                   DateTime currentCheckout;
                                   try {
-                                    // Ambil raw_departure dari API (Format: YYYY-MM-DD)
                                     currentCheckout = DateTime.parse(res['raw_departure'].toString());
                                   } catch (e) {
                                     currentCheckout = DateTime.now();
                                   }
                                   
-                                  // Minimal perpanjang adalah 1 hari SETELAH tanggal checkout sebelumnya
                                   DateTime minExtendDate = currentCheckout.add(const Duration(days: 1));
 
                                   final picked = await showDatePicker(
                                     context: context,
-                                    // Set kalender default dan batas minimalnya ke minExtendDate
                                     initialDate: minExtendDate,
                                     firstDate: minExtendDate, 
                                     lastDate: DateTime.now().add(const Duration(days: 365)),

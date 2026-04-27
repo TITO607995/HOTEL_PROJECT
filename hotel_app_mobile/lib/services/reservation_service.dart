@@ -27,7 +27,6 @@ class ReservationService {
     }
   }
 
-
   static Future<bool> createReservation(Map<String, dynamic> data) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -56,7 +55,8 @@ class ReservationService {
       String? token = prefs.getString('auth_token');
 
       final response = await http.post(
-        Uri.parse('${AuthService.baseUrl}/reservations/$id/checkout'),
+        // 🔥 URL SUDAH DISAMAKAN DENGAN API.PHP 🔥
+        Uri.parse('${AuthService.baseUrl}/reservations/check-out/$id'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -67,6 +67,10 @@ class ReservationService {
           'notes': notes,
         }),
       );
+      
+      if(response.statusCode != 200) {
+        print('❌ API Error Check-out: ${response.body}');
+      }
       return response.statusCode == 200;
     } catch (e) {
       print('Error Check-Out: $e');
@@ -79,22 +83,25 @@ class ReservationService {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('auth_token');
 
-      // Siapkan body, kalau paymentMethod ada isinya, kirim ke Laravel
       Map<String, dynamic> bodyData = {};
       if (paymentMethod != null) {
         bodyData['payment_method'] = paymentMethod;
       }
 
       final response = await http.post(
-        Uri.parse('${AuthService.baseUrl}/reservations/$id/checkin'),
+        // 🔥 URL SUDAH DISAMAKAN DENGAN API.PHP 🔥
+        Uri.parse('${AuthService.baseUrl}/reservations/check-in/$id'),
         headers: {
           'Accept': 'application/json', 
-          'Content-Type': 'application/json', // Tambah ini karena mau kirim body JSON
+          'Content-Type': 'application/json',
           'Authorization': 'Bearer $token'
         },
         body: jsonEncode(bodyData),
       );
       
+      if(response.statusCode != 200) {
+        print('❌ API Error Check-in: ${response.body}');
+      }
       return response.statusCode == 200;
     } catch (e) {
       print('Error Check-In: $e');
@@ -109,7 +116,8 @@ class ReservationService {
       String? token = prefs.getString('auth_token');
 
       final response = await http.post(
-        Uri.parse('${AuthService.baseUrl}/reservations/$id/extend'),
+        // 🔥 URL SUDAH DISAMAKAN DENGAN API.PHP (Pakai 'perpanjang') 🔥
+        Uri.parse('${AuthService.baseUrl}/reservations/perpanjang/$id'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -117,6 +125,10 @@ class ReservationService {
         },
         body: jsonEncode({'new_departure_date': newDate}),
       );
+      
+      if(response.statusCode != 200) {
+        print('❌ API Error Extend: ${response.body}');
+      }
       return response.statusCode == 200;
     } catch (e) {
       print('Error Extend: $e');
@@ -131,9 +143,14 @@ class ReservationService {
       String? token = prefs.getString('auth_token');
 
       final response = await http.post(
-        Uri.parse('${AuthService.baseUrl}/reservations/$id/cancel'),
+        // 🔥 URL SUDAH DISAMAKAN DENGAN API.PHP 🔥
+        Uri.parse('${AuthService.baseUrl}/reservations/cancel/$id'),
         headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
       );
+      
+      if(response.statusCode != 200) {
+        print('❌ API Error Cancel: ${response.body}');
+      }
       return response.statusCode == 200;
     } catch (e) {
       print('Error Cancel: $e');

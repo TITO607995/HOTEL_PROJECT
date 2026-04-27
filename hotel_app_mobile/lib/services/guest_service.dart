@@ -40,4 +40,37 @@ class GuestService {
       return false;
     }
   }
+
+  // --- TAMBAHIN DUA FUNGSI INI DI BAWAH TOGGLE INCOGNITO ---
+
+  static Future<bool> updateGuest(int id, Map<String, dynamic> data) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('auth_token');
+      final response = await http.put( // Pakai PUT untuk update
+        Uri.parse('${AuthService.baseUrl}/guests/$id'),
+        headers: {'Accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: jsonEncode(data)
+      );
+      return response.statusCode == 200;
+    } catch (e) { 
+      print('Error Update Guest: $e');
+      return false; 
+    }
+  }
+
+  static Future<bool> deleteGuest(int id) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('auth_token');
+      final response = await http.delete( // Pakai DELETE
+        Uri.parse('${AuthService.baseUrl}/guests/$id'),
+        headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'}
+      );
+      return response.statusCode == 200;
+    } catch (e) { 
+      print('Error Delete Guest: $e');
+      return false; 
+    }
+  }
 }

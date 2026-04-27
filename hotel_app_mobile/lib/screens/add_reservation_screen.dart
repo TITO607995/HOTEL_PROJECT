@@ -13,21 +13,32 @@ class AddReservationScreen extends StatefulWidget {
 class _AddReservationScreenState extends State<AddReservationScreen> {
   final _formKey = GlobalKey<FormState>();
   final Color primaryMaroon = const Color(0xFF800000);
+  final Color bgGrey = const Color(0xFFFAFBFC);
 
-  // Controller Text
+  // --- CONTROLLER LAMA ---
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController(); 
   
+  // --- CONTROLLER BARU ---
+  final _flightCtrl = TextEditingController();
+  final _idCardCtrl = TextEditingController();
+  final _numGuestsCtrl = TextEditingController(text: '1');
+  final _countryCtrl = TextEditingController(text: 'Indonesia');
+  final _cityCtrl = TextEditingController();
+  final _pobCtrl = TextEditingController();
+  final _remarksCtrl = TextEditingController();
+
   DateTime? _arrivalDate;
   DateTime? _departureDate;
   
   List<dynamic> _availableRooms = [];
   String? _selectedRoomId;
   
-  // Variabel Baru Untuk Dropdown
-  String _selectedReservationType = 'non-guaranteed'; // Default
-  String _selectedPaymentMethod = 'Cash';             // Default
+  String _selectedReservationType = 'non-guaranteed';
+  String _selectedPaymentMethod = 'Cash';
+  String _selectedPickup = 'None';
+  String _selectedStatus = 'TENTATIVE'; 
 
   bool _isLoading = false;
 
@@ -37,10 +48,24 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
     _loadAvailableRooms();
   }
 
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
+    _flightCtrl.dispose();
+    _idCardCtrl.dispose();
+    _numGuestsCtrl.dispose();
+    _countryCtrl.dispose();
+    _cityCtrl.dispose();
+    _pobCtrl.dispose();
+    _remarksCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadAvailableRooms() async {
     final rooms = await RoomService.fetchRooms();
     setState(() {
-      // Pastikan ambil status kamar yang available saja
       _availableRooms = rooms!.where((r) => r['status_label'] == 'AVAILABLE').toList();
     });
   }
@@ -67,22 +92,30 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate() || _arrivalDate == null || _departureDate == null || _selectedRoomId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lengkapi semua data & tanggal!'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cek kembali data wajib & tanggal!'), backgroundColor: Colors.red));
       return;
     }
 
     setState(() => _isLoading = true);
 
-    // Data yang akan dikirim ke API
     final data = {
       'room_id': _selectedRoomId,
-      'guest_name': _nameCtrl.text,
-      'email': _emailCtrl.text,
-      'phone': _phoneCtrl.text,
       'arrival_date': DateFormat('yyyy-MM-dd').format(_arrivalDate!),
       'departure_date': DateFormat('yyyy-MM-dd').format(_departureDate!),
-      'payment_method': _selectedPaymentMethod,       // Ambil dari Dropdown
-      'reservation_type': _selectedReservationType,   // Ambil dari Dropdown
+      'reservation_type': _selectedReservationType,
+      'payment_method': _selectedPaymentMethod,
+      'flight_detail': _flightCtrl.text,
+      'pickup_service': _selectedPickup,
+      'reservation_status': _selectedStatus,
+      'guest_name': _nameCtrl.text,
+      'id_card': _idCardCtrl.text,
+      'num_guests': _numGuestsCtrl.text,
+      'phone': _phoneCtrl.text,
+      'email': _emailCtrl.text,
+      'country': _countryCtrl.text,
+      'city': _cityCtrl.text,
+      'place_of_birth': _pobCtrl.text,
+      'remarks': _remarksCtrl.text,
     };
 
     bool success = await ReservationService.createReservation(data);
@@ -90,169 +123,212 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
     setState(() => _isLoading = false);
 
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reservasi Berhasil! 🎉'), backgroundColor: Colors.green));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reservasi Berhasil Dibuat! 🎉'), backgroundColor: Colors.green));
       Navigator.pop(context, true); 
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal menyimpan reservasi'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal menyimpan reservasi. Cek API.'), backgroundColor: Colors.red));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgGrey,
       appBar: AppBar(
-        title: const Text('Buat Reservasi', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
-        backgroundColor: Colors.white,
+        title: const Text('New Reservation', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF1B212D))),
+        backgroundColor: bgGrey,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         physics: const BouncingScrollPhysics(),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildLabel('PILIH KAMAR AVAILABLE'),
-              DropdownButtonFormField<String>(
-                decoration: _inputStyle(),
-                hint: const Text('Pilih Kamar...'),
-                value: _selectedRoomId,
-                items: _availableRooms.map((r) {
-                  return DropdownMenuItem<String>(
-                    value: r['id'].toString(), 
-                    child: Text('Kamar ${r['room_number']} - ${r['type']}'),
-                  );
-                }).toList(),
-                onChanged: (val) => setState(() => _selectedRoomId = val),
-              ),
+              _buildDatesCard(),
               const SizedBox(height: 20),
 
-              _buildLabel('NAMA TAMU'),
-              TextFormField(controller: _nameCtrl, decoration: _inputStyle(hint: 'Masukkan nama lengkap'), validator: (v) => v!.isEmpty ? 'Wajib diisi' : null),
-              const SizedBox(height: 20),
-
-              _buildLabel('EMAIL'),
-              TextFormField(controller: _emailCtrl, keyboardType: TextInputType.emailAddress, decoration: _inputStyle(hint: 'email@contoh.com'), validator: (v) => v!.isEmpty ? 'Wajib diisi' : null),
-              const SizedBox(height: 20),
-
-              _buildLabel('NOMOR TELEPON'),
-              TextFormField(controller: _phoneCtrl, keyboardType: TextInputType.phone, decoration: _inputStyle(hint: '0812xxxxxx'), validator: (v) => v!.isEmpty ? 'Wajib diisi' : null),
-              const SizedBox(height: 20),
-
-              // TANGGAL CHECK-IN & CHECK-OUT SEJAJAR
-              Row(
+              _buildSectionCard(
+                title: 'Room Configuration',
+                icon: Icons.bed,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildLabel('CHECK-IN'),
-                        InkWell(
-                          onTap: () => _pickDate(true),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                            decoration: BoxDecoration(color: Colors.grey.shade50, border: Border.all(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(15)),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(_arrivalDate == null ? 'Pilih Tanggal' : DateFormat('dd MMM yyyy').format(_arrivalDate!), style: TextStyle(color: _arrivalDate == null ? Colors.grey : Colors.black, fontSize: 13, fontWeight: FontWeight.bold)),
-                                const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  _buildLabel('SELECT AVAILABLE ROOM *'),
+                  DropdownButtonFormField<String>(
+                    isExpanded: true, // 🔥 FIX OVERFLOW DI SINI
+                    decoration: _inputStyle(),
+                    hint: const Text('— Search Room Number —', style: TextStyle(fontSize: 12)),
+                    value: _selectedRoomId,
+                    items: _availableRooms.map((r) {
+                      return DropdownMenuItem<String>(
+                        value: r['id'].toString(), 
+                        child: Text('Kamar ${r['room_number']} - ${r['type']}', style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
+                      );
+                    }).toList(),
+                    onChanged: (val) => setState(() => _selectedRoomId = val),
+                    validator: (v) => v == null ? 'Pilih kamar' : null,
                   ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildLabel('CHECK-OUT'),
-                        InkWell(
-                          onTap: () => _pickDate(false),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                            decoration: BoxDecoration(color: Colors.grey.shade50, border: Border.all(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(15)),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(_departureDate == null ? 'Pilih Tanggal' : DateFormat('dd MMM yyyy').format(_departureDate!), style: TextStyle(color: _departureDate == null ? Colors.grey : Colors.black, fontSize: 13, fontWeight: FontWeight.bold)),
-                                const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                  const SizedBox(height: 15),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('RESERVATION TYPE'),
+                            DropdownButtonFormField<String>(
+                              isExpanded: true, // 🔥 FIX OVERFLOW DI SINI
+                              decoration: _inputStyle(),
+                              value: _selectedReservationType,
+                              items: const [
+                                DropdownMenuItem(value: 'non-guaranteed', child: Text('Non-Guaranteed', style: TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
+                                DropdownMenuItem(value: 'guaranteed', child: Text('Guaranteed', style: TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
                               ],
+                              onChanged: (val) => setState(() => _selectedReservationType = val!),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('PAYMENT METHOD'),
+                            DropdownButtonFormField<String>(
+                              isExpanded: true, // 🔥 FIX OVERFLOW DI SINI
+                              decoration: _inputStyle(),
+                              value: _selectedPaymentMethod,
+                              items: const [
+                                DropdownMenuItem(value: 'Cash', child: Text('Cash', style: TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
+                                DropdownMenuItem(value: 'Transfer', child: Text('Transfer', style: TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
+                                DropdownMenuItem(value: 'Credit Card', child: Text('Credit Card', style: TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
+                              ],
+                              onChanged: (val) => setState(() => _selectedPaymentMethod = val!),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
               const SizedBox(height: 20),
 
-              // ==========================================
-              // DROPDOWN BARU: TIPE RESERVASI & PEMBAYARAN
-              // ==========================================
-              Row(
+              _buildSectionCard(
+                title: 'Arrival Information',
+                icon: Icons.flight_land,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildLabel('TIPE RESERVASI'),
-                        DropdownButtonFormField<String>(
-                          decoration: _inputStyle(),
-                          icon: Icon(Icons.keyboard_arrow_down, color: primaryMaroon), // Panah merah ala foto
-                          value: _selectedReservationType,
-                          items: const [
-                            DropdownMenuItem(value: 'non-guaranteed', child: Text('Non-Guaranteed', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold))),
-                            DropdownMenuItem(value: 'guaranteed', child: Text('Guaranteed', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold))),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('FLIGHT DETAIL & TIME'),
+                            TextFormField(controller: _flightCtrl, style: const TextStyle(fontSize: 12), decoration: _inputStyle(hint: 'e.g.: GA-123 / 14:00')),
                           ],
-                          onChanged: (val) => setState(() => _selectedReservationType = val!),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildLabel('METODE PEMBAYARAN'),
-                        DropdownButtonFormField<String>(
-                          decoration: _inputStyle(),
-                          icon: Icon(Icons.keyboard_arrow_down, color: primaryMaroon), // Panah merah ala foto
-                          value: _selectedPaymentMethod,
-                          items: const [
-                            DropdownMenuItem(value: 'Cash', child: Text('Tunai (Cash)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold))),
-                            DropdownMenuItem(value: 'Transfer', child: Text('Transfer Bank', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold))),
-                            DropdownMenuItem(value: 'Credit Card', child: Text('Kartu Kredit', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold))),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('PICKUP SERVICE'),
+                            DropdownButtonFormField<String>(
+                              isExpanded: true, // 🔥 FIX OVERFLOW DI SINI
+                              decoration: _inputStyle(),
+                              value: _selectedPickup,
+                              items: const [
+                                DropdownMenuItem(value: 'None', child: Text('None', style: TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
+                                DropdownMenuItem(value: 'Airport', child: Text('Airport', style: TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
+                                DropdownMenuItem(value: 'Train Station', child: Text('Train Station', style: TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
+                              ],
+                              onChanged: (val) => setState(() => _selectedPickup = val!),
+                            ),
                           ],
-                          onChanged: (val) => setState(() => _selectedPaymentMethod = val!),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
 
-              // TOMBOL SIMPAN
+              _buildSectionCard(
+                title: 'Guest Data',
+                icon: Icons.person,
+                children: [
+                  _buildLabel('RESERVATION STATUS'),
+                  _buildStatusToggle(), 
+                  const SizedBox(height: 20),
+
+                  _buildLabel('GUEST FULL NAME *'),
+                  TextFormField(controller: _nameCtrl, style: const TextStyle(fontSize: 12), decoration: _inputStyle(hint: 'Input name as per ID/Passport...'), validator: (v) => v!.isEmpty ? 'Wajib diisi' : null),
+                  const SizedBox(height: 15),
+
+                  _buildLabel('ID CARD / PASSPORT NUMBER'),
+                  TextFormField(controller: _idCardCtrl, style: const TextStyle(fontSize: 12), decoration: _inputStyle(hint: '3171xxxxxxxxxxxx')),
+                  const SizedBox(height: 15),
+
+                  Row(
+                    children: [
+                      Expanded(flex: 1, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        _buildLabel('GUESTS'),
+                        TextFormField(controller: _numGuestsCtrl, style: const TextStyle(fontSize: 12), keyboardType: TextInputType.number, decoration: _inputStyle()),
+                      ])),
+                      const SizedBox(width: 15),
+                      Expanded(flex: 2, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        _buildLabel('WHATSAPP NUMBER *'),
+                        TextFormField(controller: _phoneCtrl, style: const TextStyle(fontSize: 12), keyboardType: TextInputType.phone, decoration: _inputStyle(hint: '08...'), validator: (v) => v!.isEmpty ? 'Wajib diisi' : null),
+                      ])),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+
+                  _buildLabel('EMAIL ADDRESS'),
+                  TextFormField(controller: _emailCtrl, style: const TextStyle(fontSize: 12), keyboardType: TextInputType.emailAddress, decoration: _inputStyle(hint: 'guest@example.com')),
+                  const SizedBox(height: 15),
+
+                  Row(
+                    children: [
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        _buildLabel('COUNTRY'),
+                        TextFormField(controller: _countryCtrl, style: const TextStyle(fontSize: 12), decoration: _inputStyle()),
+                      ])),
+                      const SizedBox(width: 15),
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        _buildLabel('CITY'),
+                        TextFormField(controller: _cityCtrl, style: const TextStyle(fontSize: 12), decoration: _inputStyle(hint: 'Jakarta')),
+                      ])),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+
+                  _buildLabel('PLACE OF BIRTH'),
+                  TextFormField(controller: _pobCtrl, style: const TextStyle(fontSize: 12), decoration: _inputStyle(hint: 'City of Birth')),
+                  const SizedBox(height: 15),
+
+                  _buildLabel('REMARKS (NOTES)'),
+                  TextFormField(controller: _remarksCtrl, maxLines: 3, style: const TextStyle(fontSize: 12), decoration: _inputStyle(hint: 'e.g.: High floor, twin bed requested...')),
+                ],
+              ),
+              const SizedBox(height: 30),
+
               SizedBox(
-                width: double.infinity,
-                height: 55,
+                width: double.infinity, height: 55,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: primaryMaroon, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
                   onPressed: _isLoading ? null : _submitForm,
                   child: _isLoading 
-                      ? const CircularProgressIndicator(color: Colors.white) 
-                      : const Text('Simpan Reservasi', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3)) 
+                      : const Text('SAVE RESERVATION', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1)),
                 ),
-              )
+              ),
+              const SizedBox(height: 50),
             ],
           ),
         ),
@@ -260,22 +336,123 @@ class _AddReservationScreenState extends State<AddReservationScreen> {
     );
   }
 
-  // Desain Label (kecil, abu-abu, bold)
-  Widget _buildLabel(String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 8), 
-    child: Text(text, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: Colors.grey, letterSpacing: 1.0))
+  Widget _buildDatesCard() {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.shade200)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildLabel('CHECK IN *', color: primaryMaroon),
+                InkWell(
+                  onTap: () => _pickDate(true),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(_arrivalDate == null ? 'DD/MM/YYYY' : DateFormat('dd/MM/yyyy').format(_arrivalDate!), style: TextStyle(color: _arrivalDate == null ? Colors.grey : Colors.black, fontSize: 12, fontWeight: FontWeight.bold)),
+                      const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 15),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.shade200)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildLabel('CHECK OUT *', color: primaryMaroon),
+                InkWell(
+                  onTap: () => _pickDate(false),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(_departureDate == null ? 'DD/MM/YYYY' : DateFormat('dd/MM/yyyy').format(_departureDate!), style: TextStyle(color: _departureDate == null ? Colors.grey : Colors.black, fontSize: 12, fontWeight: FontWeight.bold)),
+                      const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionCard({required String title, required IconData icon, required List<Widget> children}) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey.shade200)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: primaryMaroon.withOpacity(0.1), shape: BoxShape.circle), child: Icon(icon, color: primaryMaroon, size: 18)),
+              const SizedBox(width: 10),
+              Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF1B212D))),
+            ],
+          ),
+          const Padding(padding: EdgeInsets.symmetric(vertical: 15), child: Divider(color: Colors.black12, height: 1)),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusToggle() {
+    return Container(
+      height: 40,
+      decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(20)),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedStatus = 'TENTATIVE'),
+              child: Container(
+                decoration: BoxDecoration(color: _selectedStatus == 'TENTATIVE' ? primaryMaroon : Colors.transparent, borderRadius: BorderRadius.circular(20)),
+                alignment: Alignment.center,
+                child: Text('TENTATIVE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: _selectedStatus == 'TENTATIVE' ? Colors.white : Colors.grey)),
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedStatus = 'CONFIRMED'),
+              child: Container(
+                decoration: BoxDecoration(color: _selectedStatus == 'CONFIRMED' ? Colors.green.shade700 : Colors.transparent, borderRadius: BorderRadius.circular(20)),
+                alignment: Alignment.center,
+                child: Text('CONFIRMED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: _selectedStatus == 'CONFIRMED' ? Colors.white : Colors.grey)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text, {Color? color}) => Padding(
+    padding: const EdgeInsets.only(bottom: 6), 
+    child: Text(text, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 8, color: color ?? Colors.grey, letterSpacing: 1.0))
   );
 
-  // Desain Kotak Input (Rounded soft grey seperti gambar)
   InputDecoration _inputStyle({String? hint}) => InputDecoration(
     hintText: hint,
-    hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-    filled: true,
-    fillColor: Colors.grey.shade50, // Latar abu-abu sangat muda
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: Colors.grey.shade200)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: primaryMaroon, width: 2)),
-    errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Colors.red)),
-    focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Colors.red)),
+    hintStyle: const TextStyle(color: Colors.grey, fontSize: 12, fontStyle: FontStyle.italic),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    filled: true, fillColor: Colors.transparent, 
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: primaryMaroon, width: 2)),
+    errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.red)),
+    focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.red)),
   );
 }

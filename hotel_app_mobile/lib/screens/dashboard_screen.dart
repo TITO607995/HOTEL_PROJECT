@@ -20,7 +20,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool isLoading = true;
   Map<String, dynamic>? dashboardData;
   
-  // Variabel untuk Search
   List<dynamic> allRooms = [];
   List<dynamic> filteredRooms = [];
   final TextEditingController _searchController = TextEditingController();
@@ -48,15 +47,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadData() async {
     final data = await DashboardService.fetchDashboardData();
     if (mounted && data != null) {
-      // Simulasi data banyak (bisa hapus bagian addAll ini jika sudah pakai API asli)
+      // SINKRONISASI DATA DUMMY DENGAN BACKEND BARU
       List<dynamic> rooms = List.from(data['room_list']);
-      rooms.addAll([
-        {'no': '104', 'left_status': 'Standard', 'payment': 'Cash', 'is_paid': 1, 'action': 'VACANT DIRTY'},
-        {'no': '205', 'left_status': 'Deluxe', 'payment': 'Transfer', 'is_paid': 0, 'action': 'BOOKED'},
-        {'no': '301', 'left_status': 'Suite', 'payment': 'Credit Card', 'is_paid': 1, 'action': 'OCCUPIED'},
-        {'no': '108', 'left_status': 'Standard', 'payment': '-', 'is_paid': 0, 'action': 'OO'},
-        {'no': '210', 'left_status': 'Deluxe', 'payment': 'Cash', 'is_paid': 1, 'action': 'AVAILABLE'},
-      ]);
+      if (rooms.isEmpty) {
+        rooms.addAll([
+          {'no': '107', 'guest_name': 'Praditya Rafid Tito', 'left_status': 'In-house', 'payment': 'CASH', 'guarantee': 'guaranteed', 'action': 'OCCUPIED'},
+          {'no': '106', 'guest_name': 'Tito', 'left_status': 'Booked', 'payment': 'CASH', 'guarantee': 'non-guaranteed', 'action': 'BOOKED'},
+          {'no': '101', 'guest_name': '-', 'left_status': 'Dirty', 'payment': 'CASH', 'guarantee': 'guaranteed', 'action': 'VACANT DIRTY'},
+        ]);
+      }
 
       setState(() {
         dashboardData = data;
@@ -67,12 +66,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  // Fungsi untuk memfilter list saat mengetik di Search Bar
   void _filterRooms(String query) {
     setState(() {
       filteredRooms = allRooms
           .where((room) =>
-              room['no'].toString().toLowerCase().contains(query.toLowerCase()))
+              room['no'].toString().toLowerCase().contains(query.toLowerCase()) ||
+              room['guest_name'].toString().toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
   }
@@ -107,7 +106,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. HEADER & JAM (Tetap Sama)
+              // 1. HEADER (Jam & Judul)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 50, 20, 10),
                 child: Column(
@@ -122,7 +121,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 10),
                     RichText(
                       text: TextSpan(
-                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: textDark, fontFamily: 'sans-serif'),
+                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: textDark),
                         children: [
                           const TextSpan(text: 'Dashboard '),
                           TextSpan(text: 'Hotel SIG', style: TextStyle(color: primaryMaroon)),
@@ -130,7 +129,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     const SizedBox(height: 25),
-                    // Widget Jam (Tetap Sama)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                       decoration: BoxDecoration(color: pinkBg, borderRadius: BorderRadius.circular(20)),
@@ -152,7 +150,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
 
-              // 2. KARTU UNIT KAMAR
+              // 2. KARTU STATISTIK
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 child: Column(
@@ -166,20 +164,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
 
-              // 3. SEARCH BAR & JUDUL TABEL
+              // 3. SEARCH & JUDUL TABEL
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 15),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Kamar Terisi &\nMaintenance', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: textDark)),
+                    Text('Occupied & Maintenance', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: textDark)),
                     const SizedBox(height: 15),
-                    // Widget Search Bar
                     TextField(
                       controller: _searchController,
                       onChanged: _filterRooms,
                       decoration: InputDecoration(
-                        hintText: 'Cari nomor kamar...',
+                        hintText: 'Cari nomor kamar atau nama...',
                         hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
                         prefixIcon: Icon(Icons.search, color: pinkText),
                         filled: true,
@@ -192,7 +189,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
 
-              // KOTAK TABEL
+              // 4. TABEL DATA KAMAR
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
@@ -203,45 +200,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width - 40),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
-                          child: Row(
-                            children: [
-                              _buildColText('NO. KAMAR', 90, isHeader: true),
-                              _buildColText('STATUS', 100, isHeader: true),
-                              _buildColText('PAYMENT', 110, isHeader: true),
-                              _buildColText('STATUS BAYAR', 120, isHeader: true, alignCenter: true),
-                              _buildColText('ACTION', 100, isHeader: true, alignCenter: true),
-                            ],
-                          ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Tabel
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
+                        child: Row(
+                          children: [
+                            _buildColText('ROOM NO.', 80, isHeader: true),
+                            _buildColText('NAMA TAMU', 150, isHeader: true), // KOLOM BARU
+                            _buildColText('STATUS', 100, isHeader: true),
+                            _buildColText('PAYMENT', 100, isHeader: true),
+                            _buildColText('STATUS BAYAR', 120, isHeader: true, alignCenter: true),
+                            _buildColText('ACTION', 100, isHeader: true, alignCenter: true),
+                          ],
                         ),
-                        // Data Kamar yang sudah di-filter
-                        if (filteredRooms.isEmpty)
-                          const Padding(padding: EdgeInsets.all(30), child: Text('Kamar tidak ditemukan.', style: TextStyle(color: Colors.grey)))
-                        else
-                          ...filteredRooms.map((room) {
-                            bool isPaid = room['is_paid'] == true || room['is_paid'] == 1;
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-                              child: Row(
-                                children: [
-                                  _buildColText(room['no'].toString(), 90, isBold: true),
-                                  _buildColText(room['left_status'].toString(), 100, isItalic: true),
-                                  _buildColText(room['payment'].toString(), 110, isBold: true),
-                                  SizedBox(width: 120, child: Center(child: Text(isPaid ? '✓' : '!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: isPaid ? Colors.green : pinkText)))),
-                                  SizedBox(width: 100, child: Center(child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), decoration: BoxDecoration(color: _getActionColor(room['action'].toString()), borderRadius: BorderRadius.circular(20)), child: Text(room['action'].toString(), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5))))),
-                                ],
-                              ),
-                            );
-                          }),
-                        const SizedBox(height: 10),
-                      ],
-                    ),
+                      ),
+                      // Baris Data
+                      if (filteredRooms.isEmpty)
+                        const Padding(padding: EdgeInsets.all(30), child: Text('Kamar tidak ditemukan.', style: TextStyle(color: Colors.grey)))
+                      else
+                        ...filteredRooms.map((room) {
+                          // LOGIKA SINKRONISASI DENGAN WEB (Guaranteed vs Non-Guaranteed)
+                          bool isGuaranteed = room['guarantee'] == 'guaranteed';
+                          
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+                            child: Row(
+                              children: [
+                                _buildColText(room['no'].toString(), 80, isBold: true),
+                                _buildColText(room['guest_name'] ?? '-', 150, isBold: true), // TAMPILKAN NAMA
+                                _buildColText(room['left_status'].toString(), 100, isItalic: true),
+                                _buildColText(room['payment'].toString(), 100, isBold: true),
+                                // LOGIKA IKON BARU
+                                SizedBox(
+                                  width: 120, 
+                                  child: Center(
+                                    child: Icon(
+                                      isGuaranteed ? Icons.check_circle_outline : Icons.highlight_off,
+                                      color: isGuaranteed ? Colors.green : Colors.red,
+                                      size: 22,
+                                    )
+                                  )
+                                ),
+                                SizedBox(
+                                  width: 100, 
+                                  child: Center(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), 
+                                      decoration: BoxDecoration(
+                                        color: _getActionColor(room['action'].toString()), 
+                                        borderRadius: BorderRadius.circular(20)
+                                      ), 
+                                      child: Text(
+                                        room['action'].toString(), 
+                                        style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.5)
+                                      )
+                                    )
+                                  )
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      const SizedBox(height: 15),
+                    ],
                   ),
                 ),
               ),
@@ -253,7 +277,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // --- WIDGET BANTUAN UI (Tetap Sama) ---
+  // Widget bantuan tetap sama
   Widget _buildRoomCard(String count, String type) {
     return Container(
       height: 110,
@@ -288,7 +312,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildColText(String text, double width, {bool isHeader = false, bool isBold = false, bool isItalic = false, bool alignCenter = false}) {
     return SizedBox(
       width: width,
-      child: Text(text, textAlign: alignCenter ? TextAlign.center : TextAlign.left, style: TextStyle(fontSize: isHeader ? 10 : 13, fontWeight: isHeader || isBold ? FontWeight.w900 : FontWeight.w600, fontStyle: isItalic ? FontStyle.italic : FontStyle.normal, color: isHeader ? pinkText : textDark, letterSpacing: isHeader ? 1.5 : 0)),
+      child: Text(
+        text, 
+        textAlign: alignCenter ? TextAlign.center : TextAlign.left, 
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: isHeader ? 9 : 12, 
+          fontWeight: isHeader || isBold ? FontWeight.w900 : FontWeight.w600, 
+          fontStyle: isItalic ? FontStyle.italic : FontStyle.normal, 
+          color: isHeader ? pinkText : textDark, 
+          letterSpacing: isHeader ? 1.5 : 0
+        )
+      ),
     );
   }
 }

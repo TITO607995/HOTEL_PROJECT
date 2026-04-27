@@ -64,27 +64,27 @@ class _RoleScreenState extends State<RoleScreen> {
     }
 
     // ==========================================
-    // LOGIKA PENGELOMPOKAN MENU (PARENT - CHILD)
+    // LOGIKA PENGELOMPOKAN MENU YANG LEBIH AMAN
     // ==========================================
     Map<String, Map<String, dynamic>> groupedMenus = {};
     
     for (var menu in allMenus) {
       String name = menu['name'];
       if (name.contains(' - ')) {
-        // Ini adalah sub-menu / CRUD action (misal: "Manajemen Kamar - Create")
+        // Ini adalah sub-menu / CRUD action
         var parts = name.split(' - ');
         var baseName = parts[0].trim();
         groupedMenus.putIfAbsent(baseName, () => {'base': null, 'actions': []});
         groupedMenus[baseName]!['actions'].add(menu);
       } else {
-        // Ini adalah menu utama (misal: "Manajemen Kamar")
+        // Ini adalah menu utama
         var baseName = name.trim();
         groupedMenus.putIfAbsent(baseName, () => {'base': null, 'actions': []});
         groupedMenus[baseName]!['base'] = menu;
       }
     }
 
-    // OTOMATIS CENTANG DASHBOARD & DATA TAMU
+    // OTOMATIS CENTANG DASHBOARD & DATA TAMU (Jika baseMenu ada)
     for (var baseName in groupedMenus.keys) {
       if (baseName.toLowerCase() == 'dashboard' || baseName.toLowerCase() == 'data tamu') {
         var baseMenu = groupedMenus[baseName]!['base'];
@@ -119,11 +119,18 @@ class _RoleScreenState extends State<RoleScreen> {
                     var baseMenu = entry.value['base'];
                     List<dynamic> actions = entry.value['actions'];
 
-                    if (baseMenu == null) return const SizedBox(); // Skip jika error dari database
-
-                    // Cek apakah menu ini wajib dapet akses?
+                    // 🔥 FIX: Jangan skip! Kalau baseMenu null, kita akali dengan id bayangan biar minimal nama grupnya tetep muncul.
+                    // Tapi pastinya database lu harusnya punya menu utamanya.
                     bool isMandatory = groupName.toLowerCase() == 'dashboard' || groupName.toLowerCase() == 'data tamu';
-                    bool isBaseChecked = selectedMenuIds.contains(baseMenu['id']);
+                    
+                    // Cek apakah base dicentang ATAU (kalau base gak ada) ada action yang dicentang
+                    bool isBaseChecked = false;
+                    if (baseMenu != null) {
+                       isBaseChecked = selectedMenuIds.contains(baseMenu['id']);
+                    } else {
+                       // Jika baseMenu hilang, kita anggap checked jika ada salah satu anak yang checked
+                       isBaseChecked = actions.any((a) => selectedMenuIds.contains(a['id']));
+                    }
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,10 +148,14 @@ class _RoleScreenState extends State<RoleScreen> {
                             onChanged: isMandatory ? null : (val) {
                               setStateLocal(() {
                                 if (val == true) {
-                                  selectedMenuIds.add(baseMenu['id']);
+                                  if(baseMenu != null) selectedMenuIds.add(baseMenu['id']);
+                                  // Auto check semua anak (opsional)
+                                  for(var act in actions) {
+                                    if(!selectedMenuIds.contains(act['id'])) selectedMenuIds.add(act['id']);
+                                  }
                                 } else {
                                   // MATIKAN MENU UTAMA = MATIKAN SEMUA SUB MENU CRUD
-                                  selectedMenuIds.remove(baseMenu['id']);
+                                  if(baseMenu != null) selectedMenuIds.remove(baseMenu['id']);
                                   for (var action in actions) {
                                     selectedMenuIds.remove(action['id']);
                                   }
@@ -154,8 +165,8 @@ class _RoleScreenState extends State<RoleScreen> {
                           ),
                         ),
 
-                        // 2. MUNCULKAN OPSI CRUD JIKA MENU UTAMA DICENTANG & PUNYA SUB-MENU
-                        if (isBaseChecked && actions.isNotEmpty)
+                        // 2. MUNCULKAN OPSI CRUD
+                        if (actions.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(left: 35, bottom: 10, right: 10),
                             child: Wrap(
@@ -174,8 +185,15 @@ class _RoleScreenState extends State<RoleScreen> {
                                   padding: EdgeInsets.zero,
                                   onSelected: (val) {
                                     setStateLocal(() {
-                                      if (val) selectedMenuIds.add(action['id']);
-                                      else selectedMenuIds.remove(action['id']);
+                                      if (val) {
+                                          selectedMenuIds.add(action['id']);
+                                          // Auto nyalain parent kalau anaknya dicentang
+                                          if (baseMenu != null && !selectedMenuIds.contains(baseMenu['id'])) {
+                                              selectedMenuIds.add(baseMenu['id']);
+                                          }
+                                      } else {
+                                          selectedMenuIds.remove(action['id']);
+                                      }
                                     });
                                   },
                                 );
@@ -228,7 +246,6 @@ class _RoleScreenState extends State<RoleScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
-          // MUNCUL HANYA JIKA PUNYA HAK CREATE
           if (canCreateRole)
             IconButton(icon: Icon(Icons.add_moderator, color: primaryMaroon), onPressed: () => _showRoleDialog())
         ],

@@ -1,9 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 
-import '../services/auth_service.dart';
 import 'dashboard_screen.dart'; 
 import 'room_screen.dart';      
 import 'order_screen.dart';     
@@ -15,6 +12,8 @@ import 'role_screen.dart';
 import 'housekeeping_screen.dart';
 import 'guest_screen.dart';
 import 'maintenance_screen.dart';
+import 'history_screen.dart'; // 🔥 IMPORT HISTORY SCREEN DI SINI
+import '../services/auth_service.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -29,8 +28,6 @@ class _MainScreenState extends State<MainScreen> {
 
   bool _isSuperAdmin = false;
   List<String> _allowedMenus = [];
-  
-  // 1. TAMBAHIN VARIABEL INI BRO 👇
   bool _isLoadingAccess = true; 
 
   final List<Widget> _pages = [
@@ -43,56 +40,36 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchUserAccess();
+    _loadAccessFromBrankas(); 
   }
 
-  Future<void> _fetchUserAccess() async {
+  Future<void> _loadAccessFromBrankas() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('auth_token');
+      
+      setState(() {
+        _isSuperAdmin = prefs.getBool('is_superadmin') ?? false;
+        _allowedMenus = prefs.getStringList('allowed_menus') ?? [];
+        _isLoadingAccess = false; 
+      });
 
-      if (token == null) return;
+      print("--- MAIN SCREEN CEK AKSES ---");
+      print("Superadmin: $_isSuperAdmin");
+      print("Menu: $_allowedMenus");
 
-      final response = await http.get(
-        Uri.parse('${AuthService.baseUrl}/user'),
-        headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
-      );
-
-      if (response.statusCode == 200 && mounted) {
-        final data = jsonDecode(response.body);
-        
-        // 2. SIMPAN DATA DULU
-        _isSuperAdmin = data['role_name'] == 'SUPERADMIN';
-        if (data['allowed_menus'] != null) {
-          _allowedMenus = List<String>.from(data['allowed_menus']);
-        }
-
-        await prefs.setBool('is_superadmin', _isSuperAdmin);
-        await prefs.setStringList('allowed_menus', _allowedMenus);
-
-        // 3. MATIKAN LOADING SETELAH DATA AMAN DI BRANKAS 👇
-        setState(() {
-          _isLoadingAccess = false;
-        });
-      }
     } catch (e) {
-      print('Error fetch access: $e');
-      if (mounted) setState(() => _isLoadingAccess = false);
+      print('Error baca brankas: $e');
+      setState(() => _isLoadingAccess = false);
     }
   }
 
-  // NAMA MENU UDAH DISESUAIKAN SAMA DATABASE LU (GAMBAR 6)
   bool _hasAccess(String keyword) {
     if (_isSuperAdmin) return true; 
-    
-    // Karena sekarang di database namanya panjang (ex: DATA TAMU - READ)
-    // Kita cek apakah dari daftar menu yg diizinkan ADA yang mengandung kata kuncinya
     return _allowedMenus.any((menu) => menu.contains(keyword.toUpperCase()));
   }
 
   Future<void> _logout() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Hapus semua data
+    await AuthService.logout(); 
     if (!mounted) return;
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
   }
@@ -123,7 +100,6 @@ class _MainScreenState extends State<MainScreen> {
                   crossAxisSpacing: 10,
                   childAspectRatio: 0.8,
                   children: [
-                    // KITA PAKAI NAMA DARI DATABASE LU (RESERVASI, STATUS OO/OS, DLL)
                     if (_hasAccess('RESERVASI')) ...[
                       _buildGridMenu(Icons.event_available, 'Check-In', Colors.green, onTap: () {
                         Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderScreen(mode: 'checkin')));
@@ -133,6 +109,10 @@ class _MainScreenState extends State<MainScreen> {
                       }),
                       _buildGridMenu(Icons.more_time, 'Perpanjang', Colors.blueAccent, onTap: () {
                         Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderScreen(mode: 'extend')));
+                      }),
+                      // 🔥 TOMBOL GUEST HISTORY BARU DITAMBAHKAN DI SINI
+                      _buildGridMenu(Icons.history_edu, 'History Tamu', Colors.purple, onTap: () {
+                        Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const HistoryScreen()));
                       }),
                     ],
 
@@ -207,7 +187,6 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFBFC),
       
-      // JIKA MASIH LOADING, TAMPILKAN MUTER-MUTER, JIKA SELESAI BARU TAMPILKAN TAB!
       body: _isLoadingAccess 
           ? Center(child: CircularProgressIndicator(color: primaryMaroon))
           : IndexedStack(index: _currentIndex, children: _pages),
@@ -229,7 +208,7 @@ class _MainScreenState extends State<MainScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildBottomTab(icon: Icons.dashboard, label: 'DASHBOARD', index: 0), 
-              _buildBottomTab(icon: Icons.bed, label: 'ROOMS', index: 1),           
+              _buildBottomTab(icon: Icons.bed, label: 'ROOMS', index: 1),          
               const SizedBox(width: 48), 
               _buildBottomTab(icon: Icons.people, label: 'TAMU', index: 2), 
               _buildBottomTab(icon: Icons.person, label: 'ACCOUNT', index: 3),

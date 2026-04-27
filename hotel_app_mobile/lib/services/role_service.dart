@@ -8,22 +8,37 @@ class RoleService {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('auth_token');
-      final response = await http.get(Uri.parse('${AuthService.baseUrl}/roles-management'), headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'});
-      if (response.statusCode == 200) return jsonDecode(response.body)['data'];
+      
+      // 🔥 UBAH: dari /roles-management jadi /roles 🔥
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl}/roles'), 
+        headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'}
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body)['data'];
+      } else {
+        print('❌ ERROR GET ROLES: ${response.statusCode} - ${response.body}');
+      }
       return null;
-    } catch (e) { print('Error Fetch Roles: $e'); return null; }
+    } catch (e) { 
+      print('Error Fetch Roles: $e'); 
+      return null; 
+    }
   }
 
   static Future<bool> createRole(String name, List<int> menuIds) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('auth_token');
+      
+      // 🔥 UBAH: dari /roles-management jadi /roles 🔥
       final response = await http.post(
-        Uri.parse('${AuthService.baseUrl}/roles-management'),
+        Uri.parse('${AuthService.baseUrl}/roles'),
         headers: {'Accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
         body: jsonEncode({'name': name, 'menu_ids': menuIds}),
       );
-      return response.statusCode == 200;
+      return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) { return false; }
   }
 
@@ -31,8 +46,11 @@ class RoleService {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('auth_token');
+      
+      // 🔥 UBAH: dari /roles-management/$id jadi /roles/$id 🔥
+      // Catatan: Pastikan di api.php Laravel lu ada rute POST /roles/{id} untuk update ya!
       final response = await http.post(
-        Uri.parse('${AuthService.baseUrl}/roles-management/$id'),
+        Uri.parse('${AuthService.baseUrl}/roles/$id'),
         headers: {'Accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
         body: jsonEncode({'name': name, 'menu_ids': menuIds}),
       );
@@ -44,7 +62,12 @@ class RoleService {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('auth_token');
-      final response = await http.delete(Uri.parse('${AuthService.baseUrl}/roles-management/$id'), headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'});
+      
+      // 🔥 UBAH: dari /roles-management/$id jadi /roles/$id 🔥
+      final response = await http.delete(
+        Uri.parse('${AuthService.baseUrl}/roles/$id'), 
+        headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'}
+      );
       return response.statusCode == 200;
     } catch (e) { return false; }
   }

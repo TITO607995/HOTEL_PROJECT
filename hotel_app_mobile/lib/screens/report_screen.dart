@@ -54,7 +54,7 @@ class _ReportScreenState extends State<ReportScreen> {
       child: Scaffold(
         backgroundColor: bgGrey,
         appBar: AppBar(
-          title: const Text('EXECUTIVE REPORTS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF1B212D), fontStyle: FontStyle.italic)),
+          title: const Text('EXECUTIVE REPORTS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF1B212D), fontStyle: FontStyle.italic)),
           backgroundColor: Colors.white,
           elevation: 0,
           iconTheme: const IconThemeData(color: Colors.black),
@@ -100,7 +100,7 @@ class _ReportScreenState extends State<ReportScreen> {
           Row(
             children: [
               Expanded(child: _buildStatCard('AVAILABLE', opsData!['available'].toString(), Icons.door_front_door, Colors.green)),
-              const SizedBox(width: 15),
+              const SizedBox(width: 10), // 🔥 Perkecil jarak antar card sedikit biar lega
               Expanded(child: _buildStatCard('OUT OF ORDER', opsData!['oo'].toString(), Icons.build, Colors.red)),
             ],
           ),
@@ -108,7 +108,7 @@ class _ReportScreenState extends State<ReportScreen> {
           Row(
             children: [
               Expanded(child: _buildStatCard('STAFF ACTIVE', opsData!['staff'].toString(), Icons.people, Colors.blue)),
-              const SizedBox(width: 15),
+              const SizedBox(width: 10),
               Expanded(child: _buildStatCard('OCCUPANCY', '${opsData!['occupancy']}%', Icons.analytics, Colors.orange)),
             ],
           ),
@@ -157,7 +157,7 @@ class _ReportScreenState extends State<ReportScreen> {
           Row(
             children: [
               Expanded(child: _buildMoneyCard('PENDAPATAN KAMAR', finData!['pendapatan_kamar'], Icons.bed, Colors.blue, isSmall: true)),
-              const SizedBox(width: 15),
+              const SizedBox(width: 10),
               Expanded(child: _buildMoneyCard('BIAYA TAMBAHAN', finData!['biaya_tambahan'], Icons.add_circle, Colors.orange, isSmall: true)),
             ],
           ),
@@ -198,7 +198,6 @@ class _ReportScreenState extends State<ReportScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Total Dibayar', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
-                    // Konversi aman pakai _safeInt
                     Text(currencyFormat.format(_safeInt(t['total_amount'])), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.green)),
                   ],
                 )
@@ -210,7 +209,7 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  // Desain Kartu Stat Operasional
+  // 🔥 FIX OVERFLOW: Bungkus text judul pakai Flexible
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(15),
@@ -220,21 +219,29 @@ class _ReportScreenState extends State<ReportScreen> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(icon, color: color, size: 20),
-              Text(title, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: color)),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(title, textAlign: TextAlign.right, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: color)),
+              ),
             ],
           ),
           const SizedBox(height: 15),
-          Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1B212D))),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1B212D))),
+          ),
         ],
       ),
     );
   }
 
-  // Desain Kartu Uang Keuangan (Ubah parameter ke dynamic biar kebal String)
+  // 🔥 FIX OVERFLOW: Sama kayak stat card, kita bikin dia flexible
   Widget _buildMoneyCard(String title, dynamic rawAmount, IconData icon, Color color, {bool isSmall = false}) {
-    int amount = _safeInt(rawAmount); // Di-parse dulu biar aman
+    int amount = _safeInt(rawAmount); 
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -244,13 +251,21 @@ class _ReportScreenState extends State<ReportScreen> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(icon, color: color, size: isSmall ? 20 : 24),
-              Text(title, style: TextStyle(fontSize: isSmall ? 9 : 11, fontWeight: FontWeight.w900, color: color)),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(title, textAlign: TextAlign.right, style: TextStyle(fontSize: isSmall ? 8 : 11, fontWeight: FontWeight.w900, color: color)),
+              ),
             ],
           ),
           const SizedBox(height: 15),
-          Text(currencyFormat.format(amount), style: TextStyle(fontSize: isSmall ? 18 : 28, fontWeight: FontWeight.w900, color: const Color(0xFF1B212D))),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(currencyFormat.format(amount), style: TextStyle(fontSize: isSmall ? 18 : 28, fontWeight: FontWeight.w900, color: const Color(0xFF1B212D))),
+          ),
         ],
       ),
     );
